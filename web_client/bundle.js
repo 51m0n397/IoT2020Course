@@ -1,18 +1,4 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-/*
- * Copyright 2015-2016 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
- */
 
 /*
  * NOTE: You must set the following string constants prior to running this
@@ -27,20 +13,6 @@ module.exports = awsConfiguration;
 
 
 },{}],2:[function(require,module,exports){
-/*
- * Copyright 2015-2016 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
- */
 
 //
 // Instantiate the AWS SDK and configuration objects.  The AWS SDK for
@@ -59,15 +31,13 @@ console.log('Loaded AWS SDK for JavaScript and AWS IoT SDK for Node.js');
 //
 var currentlySubscribedTopic = 'stations/+';
 
-//
-// Remember our message history here.
-//
-var messageHistory = '';
+var stationsStatus = {};
+var currentStation = "";
 
 //
 // Create a client id to use when connecting to AWS IoT.
 //
-var clientId = 'mqtt-explorer-' + (Math.floor((Math.random() * 100000) + 1));
+var clientId = 'dashboard-' + (Math.floor((Math.random() * 100000) + 1));
 
 //
 // Initialize our configuration.
@@ -158,9 +128,7 @@ window.mqttClientConnectHandler = function() {
    console.log('connect');
    document.getElementById("connecting-div").style.visibility = 'hidden';
    document.getElementById("explorer-div").style.visibility = 'visible';
-   document.getElementById('subscribe-div').innerHTML = '<p><br></p>';
-   messageHistory = '';
-
+   document.getElementById('past-data-div').style.visibility = 'visible';
    //
    // Subscribe to our current topic.
    //
@@ -174,6 +142,7 @@ window.mqttClientReconnectHandler = function() {
    console.log('reconnect');
    document.getElementById("connecting-div").style.visibility = 'visible';
    document.getElementById("explorer-div").style.visibility = 'hidden';
+   document.getElementById('past-data-div').style.visibility = 'hidden';
 };
 
 //
@@ -189,20 +158,28 @@ window.isUndefined = function(value) {
 //
 window.mqttClientMessageHandler = function(topic, payload) {
    console.log('message: ' + topic + ':' + payload.toString());
-   messageHistory = messageHistory + topic + ':' + payload.toString() + '</br>';
-   document.getElementById('subscribe-div').innerHTML = '<p>' + messageHistory + '</p>';
-};
-
-
-//
-// Handle the UI to clear the history window
-//
-window.clearHistory = function() {
-   if (confirm('Delete message history?') === true) {
-      document.getElementById('subscribe-div').innerHTML = '<p><br></p>';
-      messageHistory = '';
+   var stationNum = Object.keys(stationsStatus).length;
+   stationsStatus[topic.slice(9)]=JSON.parse(payload.toString());
+   console.log(stationsStatus);
+   if (Object.keys(stationsStatus).length!= stationNum) {
+     document.getElementById("station-select").innerHTML += '<option value="'+ topic.slice(9) + '">' + topic.slice(9) + '</option>';
    }
+   if (currentStation!="") updateInfo();
 };
+
+window.updateInfo = function() {
+   var infoTable = document.getElementById("station-info");
+   infoTable.rows.item(0).cells.item(1).innerHTML = stationsStatus[currentStation].temperature;
+   infoTable.rows.item(1).cells.item(1).innerHTML = stationsStatus[currentStation].humidity;
+   infoTable.rows.item(2).cells.item(1).innerHTML = stationsStatus[currentStation].windDirection;
+   infoTable.rows.item(3).cells.item(1).innerHTML = stationsStatus[currentStation].windIntensity;
+   infoTable.rows.item(4).cells.item(1).innerHTML = stationsStatus[currentStation].rainHeight;
+}
+
+window.changeStation = function() {
+   currentStation = document.getElementById("station-select").value;
+   updateInfo();
+}
 
 
 //
@@ -217,6 +194,124 @@ mqttClient.on('message', window.mqttClientMessageHandler);
 //
 document.getElementById('connecting-div').style.visibility = 'visible';
 document.getElementById('explorer-div').style.visibility = 'hidden';
+document.getElementById('past-data-div').style.visibility = 'hidden';
 document.getElementById('connecting-div').innerHTML = '<p>attempting to connect to aws iot...</p>';
+
+
+
+// Create DynamoDB service object
+var ddb = new AWS.DynamoDB({apiVersion: '2012-08-10'});
+var stationsList = new Set();
+
+var scanParams = {
+  ExpressionAttributeNames:{
+      "#id": "id",
+  },
+  ProjectionExpression: '#id',
+  TableName: 'EnvironmentalStations'
+};
+
+ddb.scan(scanParams, function(err, data) {
+  if (err) {
+    console.log("Error", err);
+  } else {
+    data.Items.forEach(function(element, index, array) {
+      stationsList.add(element.id.S);
+    });
+    stationsList = Array.from(stationsList);
+    console.log("Success", stationsList);
+    stationsList.forEach(function(element, index, array) {
+      document.getElementById("station-history-select").innerHTML += '<option value="'+ element + '">' + element + '</option>';
+    });
+  }
+});
+
+function lastHour() {
+  var d = new Date();
+  d.setHours(d.getHours() -1);
+  return d.getTime();
+}
+
+window.changeHistoryStation = function() {
+  var params = {
+    ExpressionAttributeValues: {
+        ":station":{S:document.getElementById("station-history-select").value},
+        ":lastHour":{N:lastHour().toString()}
+    },
+    ExpressionAttributeNames:{
+        "#id": "id",
+        "#time": "timestamp"
+    },
+    KeyConditionExpression: "#id = :station and #time >= :lastHour",
+    //ProjectionExpression: 'payload',
+    TableName: 'EnvironmentalStations'
+  };
+
+  ddb.query(params, function(err, data) {
+    if (err) {
+      console.log("Error", err);
+    } else {
+      var time = [];
+      var temp = [];
+      var hum = [];
+      var windDir = [];
+      var windInt = [];
+      var rain = [];
+      data.Items.forEach(function(element, index, array) {
+        time.push(Date(element.timestamp.N));
+        temp.push(element.payload.M.temperature.S);
+        hum.push(element.payload.M.humidity.S);
+        windDir.push(element.payload.M.windDirection.S);
+        windInt.push(element.payload.M.windIntensity.S);
+        rain.push(element.payload.M.rainHeight.S);
+      });
+      var ctx = document.getElementById('myChart').getContext('2d');
+      var myChart = new Chart(ctx, {
+        "type": "line",
+        "data": {
+          "labels": time,
+          "datasets": [{
+            "label": "Temperature",
+            "data": temp,
+            "fill": false,
+            "borderColor": "rgb(241,88,84)",
+            "lineTension": 0.1
+          },
+          {
+            "label": "Humidity",
+            "data": hum,
+            "fill": false,
+            "borderColor": "rgb(250,164,58)",
+            "lineTension": 0.1
+          },
+          {
+            "label": "Wind Direction",
+            "data": windDir,
+            "fill": false,
+            "borderColor": "rgb(96,189,104)",
+            "lineTension": 0.1
+          },
+          {
+            "label": "Wind Intensity",
+            "data": windInt,
+            "fill": false,
+            "borderColor": "rgb(93,165,218)",
+            "lineTension": 0.1
+          },
+          {
+            "label": "Rain Height",
+            "data": rain,
+            "fill": false,
+            "borderColor": "rgb(178,118,178)",
+            "lineTension": 0.1
+          }]
+        },
+        "options": {}
+      });
+    }
+  });
+}
+
+
 
 },{"./aws-configuration.js":1,"aws-iot-device-sdk":"aws-iot-device-sdk","aws-sdk":"aws-sdk"}]},{},[2]);
