@@ -126,24 +126,9 @@ AWS.config.credentials.get(function(err, data) {
 //
 window.mqttClientConnectHandler = function() {
    console.log('connect');
-   document.getElementById("connecting-div").style.visibility = 'hidden';
-   document.getElementById("explorer-div").style.visibility = 'visible';
-   document.getElementById('past-data-div').style.visibility = 'visible';
-   //
-   // Subscribe to our current topic.
-   //
    mqttClient.subscribe(currentlySubscribedTopic);
 };
 
-//
-// Reconnect handler; update div visibility.
-//
-window.mqttClientReconnectHandler = function() {
-   console.log('reconnect');
-   document.getElementById("connecting-div").style.visibility = 'visible';
-   document.getElementById("explorer-div").style.visibility = 'hidden';
-   document.getElementById('past-data-div').style.visibility = 'hidden';
-};
 
 //
 // Utility function to determine if a value has been defined.
@@ -169,11 +154,11 @@ window.mqttClientMessageHandler = function(topic, payload) {
 
 window.updateInfo = function() {
    var infoTable = document.getElementById("station-info");
-   infoTable.rows.item(0).cells.item(1).innerHTML = stationsStatus[currentStation].temperature;
-   infoTable.rows.item(1).cells.item(1).innerHTML = stationsStatus[currentStation].humidity;
-   infoTable.rows.item(2).cells.item(1).innerHTML = stationsStatus[currentStation].windDirection;
-   infoTable.rows.item(3).cells.item(1).innerHTML = stationsStatus[currentStation].windIntensity;
-   infoTable.rows.item(4).cells.item(1).innerHTML = stationsStatus[currentStation].rainHeight;
+   infoTable.rows.item(0).cells.item(1).innerHTML = stationsStatus[currentStation].temperature + " °C";
+   infoTable.rows.item(1).cells.item(1).innerHTML = stationsStatus[currentStation].humidity + "%";
+   infoTable.rows.item(2).cells.item(1).innerHTML = stationsStatus[currentStation].windDirection  + "°";
+   infoTable.rows.item(3).cells.item(1).innerHTML = stationsStatus[currentStation].windIntensity + " m/s";
+   infoTable.rows.item(4).cells.item(1).innerHTML = stationsStatus[currentStation].rainHeight + " mm/h";
 }
 
 window.changeStation = function() {
@@ -181,22 +166,25 @@ window.changeStation = function() {
    updateInfo();
 }
 
+window.switchView = function(activate) {
+  if (activate=="current-status-link"){
+    document.getElementById("current-status-link").className = "active";
+    document.getElementById("past-status-link").className = "inactive";
+    document.getElementById('current-status-div').style.display = 'block';
+    document.getElementById('past-status-div').style.display = 'none';
+  } else {
+    document.getElementById("current-status-link").className = "inactive";
+    document.getElementById("past-status-link").className = "active";
+    document.getElementById('current-status-div').style.display = 'none';
+    document.getElementById('past-status-div').style.display = 'block';
+  }
+}
 
 //
 // Install connect/reconnect event handlers.
 //
 mqttClient.on('connect', window.mqttClientConnectHandler);
-mqttClient.on('reconnect', window.mqttClientReconnectHandler);
 mqttClient.on('message', window.mqttClientMessageHandler);
-
-//
-// Initialize divs.
-//
-document.getElementById('connecting-div').style.visibility = 'visible';
-document.getElementById('explorer-div').style.visibility = 'hidden';
-document.getElementById('past-data-div').style.visibility = 'hidden';
-document.getElementById('connecting-div').innerHTML = '<p>attempting to connect to aws iot...</p>';
-
 
 
 // Create DynamoDB service object
@@ -232,6 +220,19 @@ function lastHour() {
   return d.getTime();
 }
 
+function dateToHMS(d) {
+  function addZero(i) {
+    if (i < 10) {
+      i = "0" + i;
+    }
+    return i;
+  }
+  var h = addZero(d.getHours());
+  var m = addZero(d.getMinutes());
+  var s = addZero(d.getSeconds());
+  return h + ":" + m + ":" + s;
+}
+
 window.changeHistoryStation = function() {
   var params = {
     ExpressionAttributeValues: {
@@ -258,15 +259,17 @@ window.changeHistoryStation = function() {
       var windInt = [];
       var rain = [];
       data.Items.forEach(function(element, index, array) {
-        time.push(Date(element.timestamp.N));
+        var d = new Date();
+        d.setTime(element.timestamp.N);
+        time.push(dateToHMS(d));
         temp.push(element.payload.M.temperature.S);
         hum.push(element.payload.M.humidity.S);
         windDir.push(element.payload.M.windDirection.S);
         windInt.push(element.payload.M.windIntensity.S);
         rain.push(element.payload.M.rainHeight.S);
       });
-      var ctx = document.getElementById('myChart').getContext('2d');
-      var myChart = new Chart(ctx, {
+
+      var temChart = new Chart(document.getElementById('temp-chart').getContext('2d'), {
         "type": "line",
         "data": {
           "labels": time,
@@ -276,29 +279,69 @@ window.changeHistoryStation = function() {
             "fill": false,
             "borderColor": "rgb(241,88,84)",
             "lineTension": 0.1
-          },
-          {
+          }]
+        },
+        "options": {
+          responsive: true
+        }
+      });
+
+      var humChart = new Chart(document.getElementById('hum-chart').getContext('2d'), {
+        "type": "line",
+        "data": {
+          "labels": time,
+          "datasets": [{
             "label": "Humidity",
             "data": hum,
             "fill": false,
             "borderColor": "rgb(250,164,58)",
             "lineTension": 0.1
-          },
-          {
+          }]
+        },
+        "options": {
+          responsive: true
+        }
+      });
+
+      var windDirChart = new Chart(document.getElementById('wind-dir-chart').getContext('2d'), {
+        "type": "line",
+        "data": {
+          "labels": time,
+          "datasets": [{
             "label": "Wind Direction",
             "data": windDir,
             "fill": false,
             "borderColor": "rgb(96,189,104)",
             "lineTension": 0.1
-          },
-          {
+          }]
+        },
+        "options": {
+          responsive: true
+        }
+      });
+
+      var windIntChart = new Chart(document.getElementById('wind-int-chart').getContext('2d'), {
+        "type": "line",
+        "data": {
+          "labels": time,
+          "datasets": [{
             "label": "Wind Intensity",
             "data": windInt,
             "fill": false,
             "borderColor": "rgb(93,165,218)",
             "lineTension": 0.1
-          },
-          {
+          }]
+        },
+        "options": {
+          responsive: true
+        }
+      });
+
+      var rainChart = new Chart(document.getElementById('rain-chart').getContext('2d'), {
+        "type": "line",
+        "data": {
+          "labels": time,
+          "datasets": [{
             "label": "Rain Height",
             "data": rain,
             "fill": false,
@@ -306,7 +349,9 @@ window.changeHistoryStation = function() {
             "lineTension": 0.1
           }]
         },
-        "options": {}
+        "options": {
+          responsive: true
+        }
       });
     }
   });

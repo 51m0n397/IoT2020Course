@@ -2,17 +2,27 @@
 <head>
    <meta charset="UTF-8">
    <link rel="stylesheet" type="text/css" href="example.css">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
+  <div class="topbar">
+  <div class="header">
+      <h1>Environmental stations dashboard</h1>
+    </div>
 
-   <div class="block" id="connecting-div"></div>
+  <div class="topnav">
+    <a class="active" id="current-status-link" onClick="switchView('current-status-link')">Current status</a>
+    <a class="inactive" id="past-status-link" onClick="switchView('past-status-link')">Past status</a>
+  </div>
+</div>
 
-   <div class="block" id="explorer-div" style="visibility:hidden">
-     <select id="station-select" onChange="changeStation()">
-       <option disabled selected value> -- select an option -- </option>
-     </select>
-     <table id="station-info" style="width:100%">
+   <div id="current-status-div">
+     <div align="center" style="padding:15px;">
+       <select id="station-select" onChange="changeStation()">
+         <option disabled selected value> -- select an option -- </option>
+       </select>
+     </div>
+     <table id="station-info">
        <tr>
          <th>Temperature</th>
          <td></td>
@@ -36,12 +46,26 @@
      </table>
    </div>
 
-   <div class="block" id="past-data-div" style="visibility:hidden">
-     <select id="station-history-select" onChange="changeHistoryStation()">
-       <option disabled selected value> -- select an option -- </option>
-     </select>
+   <div id="past-status-div" style="display:none;">
+     <div align="center" style="padding:15px;">
+       <select id="station-history-select" onChange="changeHistoryStation()">
+         <option disabled selected value> -- select an option -- </option>
+       </select>
+       <button type="button" onClick="changeHistoryStation()">Refresh</button>
+     </div>
      <br>
-     <canvas id="myChart" width="400" height="400"></canvas>
+     <div class="chart">
+       <canvas id="temp-chart"></canvas>
+       <br>
+       <canvas id="hum-chart"></canvas>
+       <br>
+       <canvas id="wind-dir-chart"></canvas>
+       <br>
+       <canvas id="wind-int-chart"></canvas>
+       <br>
+       <canvas id="rain-chart"></canvas>
+     </div>
+     <br>
    </div>
 
    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js" integrity="sha256-R4pqcOYV8lt7snxMQO/HSbVCFRPMdrhAFMH+vr9giYI=" crossorigin="anonymous"></script>
