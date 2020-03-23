@@ -207,6 +207,7 @@ ddb.scan(scanParams, function(err, data) {
       stationsList.add(element.id.S);
     });
     stationsList = Array.from(stationsList);
+    stationsList.sort();
     stationsList.forEach(function(elem, index) {
       document.getElementById("chart-div").innerHTML += "<canvas id='chart" + index + "'></canvas><br>";
     });
@@ -232,11 +233,6 @@ window.refreshSensorChart = function() {
     var s = addZero(d.getSeconds());
     return h + ":" + m + ":" + s;
   }
-
-  function randomColor() {
-    return Math.floor(Math.random()*16777215).toString(16);
-  }
-
 
   stationsList.forEach(function(id, index) {
     var params = {
@@ -280,7 +276,7 @@ window.refreshSensorChart = function() {
               "label": id,
               "data": dataset,
               "fill": false,
-              "borderColor": randomColor(),
+              "borderColor": 'rgb(255, 0, 0)',
               "lineTension": 0.1
             }]
           },
