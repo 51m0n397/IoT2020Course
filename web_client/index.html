@@ -48,22 +48,18 @@
 
    <div id="past-status-div" style="display:none;">
      <div align="center" style="padding:15px;">
-       <select id="station-history-select" onChange="changeHistoryStation()">
+       <select id="sensor-select" onChange="refreshSensorChart()">
          <option disabled selected value> -- select an option -- </option>
+         <option value="temperature">Temperature</option>
+         <option value="humidity">Humidity</option>
+         <option value="windDirection">Wind Direction</option>
+         <option value="windIntensity">Wind Intensity</option>
+         <option value="rainHeight">Rain Height</option>
        </select>
-       <button type="button" onClick="changeHistoryStation()">Refresh</button>
+       <button type="button" onClick="refreshSensorChart()">Refresh</button>
      </div>
      <br>
-     <div class="chart">
-       <canvas id="temp-chart"></canvas>
-       <br>
-       <canvas id="hum-chart"></canvas>
-       <br>
-       <canvas id="wind-dir-chart"></canvas>
-       <br>
-       <canvas id="wind-int-chart"></canvas>
-       <br>
-       <canvas id="rain-chart"></canvas>
+     <div id="chart-div" class="chart">
      </div>
      <br>
    </div>

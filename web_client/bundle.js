@@ -142,10 +142,10 @@ window.isUndefined = function(value) {
 // connect/disconnect.
 //
 window.mqttClientMessageHandler = function(topic, payload) {
-   console.log('message: ' + topic + ':' + payload.toString());
+   //console.log('message: ' + topic + ':' + payload.toString());
    var stationNum = Object.keys(stationsStatus).length;
    stationsStatus[topic.slice(9)]=JSON.parse(payload.toString());
-   console.log(stationsStatus);
+   //console.log(stationsStatus);
    if (Object.keys(stationsStatus).length!= stationNum) {
      document.getElementById("station-select").innerHTML += '<option value="'+ topic.slice(9) + '">' + topic.slice(9) + '</option>';
    }
@@ -203,160 +203,99 @@ ddb.scan(scanParams, function(err, data) {
   if (err) {
     console.log("Error", err);
   } else {
-    data.Items.forEach(function(element, index, array) {
+    data.Items.forEach(function(element) {
       stationsList.add(element.id.S);
     });
     stationsList = Array.from(stationsList);
-    console.log("Success", stationsList);
-    stationsList.forEach(function(element, index, array) {
-      document.getElementById("station-history-select").innerHTML += '<option value="'+ element + '">' + element + '</option>';
+    stationsList.forEach(function(elem, index) {
+      document.getElementById("chart-div").innerHTML += "<canvas id='chart" + index + "'></canvas><br>";
     });
   }
 });
 
-function lastHour() {
-  var d = new Date();
-  d.setHours(d.getHours() -1);
-  return d.getTime();
-}
-
-function dateToHMS(d) {
-  function addZero(i) {
-    if (i < 10) {
-      i = "0" + i;
-    }
-    return i;
+window.refreshSensorChart = function() {
+  function lastHour() {
+    var d = new Date();
+    d.setHours(d.getHours() -1);
+    return d.getTime();
   }
-  var h = addZero(d.getHours());
-  var m = addZero(d.getMinutes());
-  var s = addZero(d.getSeconds());
-  return h + ":" + m + ":" + s;
-}
 
-window.changeHistoryStation = function() {
-  var params = {
-    ExpressionAttributeValues: {
-        ":station":{S:document.getElementById("station-history-select").value},
-        ":lastHour":{N:lastHour().toString()}
-    },
-    ExpressionAttributeNames:{
-        "#id": "id",
-        "#time": "timestamp"
-    },
-    KeyConditionExpression: "#id = :station and #time >= :lastHour",
-    //ProjectionExpression: 'payload',
-    TableName: 'EnvironmentalStations'
-  };
-
-  ddb.query(params, function(err, data) {
-    if (err) {
-      console.log("Error", err);
-    } else {
-      var time = [];
-      var temp = [];
-      var hum = [];
-      var windDir = [];
-      var windInt = [];
-      var rain = [];
-      data.Items.forEach(function(element, index, array) {
-        var d = new Date();
-        d.setTime(element.timestamp.N);
-        time.push(dateToHMS(d));
-        temp.push(element.payload.M.temperature.S);
-        hum.push(element.payload.M.humidity.S);
-        windDir.push(element.payload.M.windDirection.S);
-        windInt.push(element.payload.M.windIntensity.S);
-        rain.push(element.payload.M.rainHeight.S);
-      });
-
-      var temChart = new Chart(document.getElementById('temp-chart').getContext('2d'), {
-        "type": "line",
-        "data": {
-          "labels": time,
-          "datasets": [{
-            "label": "Temperature",
-            "data": temp,
-            "fill": false,
-            "borderColor": "rgb(241,88,84)",
-            "lineTension": 0.1
-          }]
-        },
-        "options": {
-          responsive: true
-        }
-      });
-
-      var humChart = new Chart(document.getElementById('hum-chart').getContext('2d'), {
-        "type": "line",
-        "data": {
-          "labels": time,
-          "datasets": [{
-            "label": "Humidity",
-            "data": hum,
-            "fill": false,
-            "borderColor": "rgb(250,164,58)",
-            "lineTension": 0.1
-          }]
-        },
-        "options": {
-          responsive: true
-        }
-      });
-
-      var windDirChart = new Chart(document.getElementById('wind-dir-chart').getContext('2d'), {
-        "type": "line",
-        "data": {
-          "labels": time,
-          "datasets": [{
-            "label": "Wind Direction",
-            "data": windDir,
-            "fill": false,
-            "borderColor": "rgb(96,189,104)",
-            "lineTension": 0.1
-          }]
-        },
-        "options": {
-          responsive: true
-        }
-      });
-
-      var windIntChart = new Chart(document.getElementById('wind-int-chart').getContext('2d'), {
-        "type": "line",
-        "data": {
-          "labels": time,
-          "datasets": [{
-            "label": "Wind Intensity",
-            "data": windInt,
-            "fill": false,
-            "borderColor": "rgb(93,165,218)",
-            "lineTension": 0.1
-          }]
-        },
-        "options": {
-          responsive: true
-        }
-      });
-
-      var rainChart = new Chart(document.getElementById('rain-chart').getContext('2d'), {
-        "type": "line",
-        "data": {
-          "labels": time,
-          "datasets": [{
-            "label": "Rain Height",
-            "data": rain,
-            "fill": false,
-            "borderColor": "rgb(178,118,178)",
-            "lineTension": 0.1
-          }]
-        },
-        "options": {
-          responsive: true
-        }
-      });
+  function dateToHMS(d) {
+    function addZero(i) {
+      if (i < 10) {
+        i = "0" + i;
+      }
+      return i;
     }
+    var h = addZero(d.getHours());
+    var m = addZero(d.getMinutes());
+    var s = addZero(d.getSeconds());
+    return h + ":" + m + ":" + s;
+  }
+
+  function randomColor() {
+    return Math.floor(Math.random()*16777215).toString(16);
+  }
+
+
+  stationsList.forEach(function(id, index) {
+    var params = {
+      ExpressionAttributeValues: {
+          ":station":{S:id},
+          ":lastHour":{N:lastHour().toString()}
+      },
+      ExpressionAttributeNames:{
+          "#id": "id",
+          "#time": "timestamp"
+      },
+      KeyConditionExpression: "#id = :station and #time >= :lastHour",
+      TableName: 'EnvironmentalStations'
+    };
+
+    ddb.query(params, function(err, data) {
+      if (err) {
+        console.log("Error", err);
+      } else {
+
+        var time=[];
+        var dataset=[];
+
+        data.Items.forEach(function(element) {
+          var d = new Date();
+          d.setTime(element.timestamp.N);
+          time.push(dateToHMS(d));
+          var sensor = document.getElementById("sensor-select").value;
+          console.log(sensor);
+          dataset.push(element.payload.M[sensor].S);
+        });
+
+        console.log(dataset);
+
+
+        let chart = new Chart(document.getElementById('chart'+index).getContext('2d'), {
+          "type": "line",
+          "data": {
+            "labels": time,
+            "datasets": [{
+              "label": id,
+              "data": dataset,
+              "fill": false,
+              "borderColor": randomColor(),
+              "lineTension": 0.1
+            }]
+          },
+          "options": {
+            responsive: true
+          }
+        });
+
+        console.log(chart);
+
+      }
+    });
+
   });
+
 }
-
-
 
 },{"./aws-configuration.js":1,"aws-iot-device-sdk":"aws-iot-device-sdk","aws-sdk":"aws-sdk"}]},{},[2]);
