@@ -1,20 +1,19 @@
 #import libraries
 import random
-from threading import Thread
+import threading
 import time
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 
-class EnvironmentalStation(Thread):
-    temperature = 0
-    humidity = 0
-    windDirection = 0
-    windIntensity = 0
-    rainHeight = 0
-
+class EnvironmentalStation(threading.Thread):
     def __init__(self, name):
-        Thread.__init__(self)
+        threading.Thread.__init__(self)
         self.name = name
         self.MQTTClient = AWSIoTMQTTClient(name)
+        self.temperature = 0
+        self.humidity = 0
+        self.windDirection = 0
+        self.windIntensity = 0
+        self.rainHeight = 0
 
     def updateSensors(self):
         self.temperature = random.randint(-50, 51)
@@ -48,8 +47,7 @@ class EnvironmentalStation(Thread):
 
     def run(self):
         self.configureMQTT()
-        while start:
-            time.sleep(600)
+        while not quit.is_set():
             try:
                 self.connect()
             except:
@@ -57,7 +55,10 @@ class EnvironmentalStation(Thread):
             self.updateSensors()
             self.publish()
             self.disconnect()
+            quit.wait(600)
 
+
+quit = threading.Event()
 numStation = 0
 while True:
     numStation = input("Enter the number of environmental station to launch\n")
@@ -72,13 +73,12 @@ stationList = []
 for i in range(0, numStation):
     stationList.append(EnvironmentalStation("environmentalStation" + str(i)))
 
-start = True
 for station in stationList:
     station.start()
 
 while True:
     if input("Enter 'stop' to stop the stations\n")=='stop':
-        start = False
+        quit.set()
         for station in stationList:
             station.join()
         break
