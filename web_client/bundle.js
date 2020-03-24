@@ -157,7 +157,60 @@ var ddb = new AWS.DynamoDB({apiVersion: '2012-08-10'});
 //List of stations in the database.
 var stationsList = new Set();
 
-//Function that // REVIEW: eturns the timestamp of one hour ago.
+//Units for sensors data.
+var units = {
+  temperature: ' °C',
+  humidity: '%',
+  windDirection: '°',
+  windIntensity: ' m/s',
+  rainHeight: ' mm/h'
+}
+
+//Settings for yAxis of the chart.
+var yAxisSettings = {
+  temperature: {
+    min: -50,
+    max: 50,
+    stepSize: 10,
+    callback: function(value) {
+                return value + ' °C';
+              }
+  },
+  humidity: {
+    min: 0,
+    max: 100,
+    stepSize: 10,
+    callback: function(value) {
+                return value + '%';
+              }
+  },
+  windDirection: {
+    min: 0,
+    max: 360,
+    stepSize: 30,
+    callback: function(value) {
+                return value + '°';
+              }
+  },
+  windIntensity: {
+    min: 0,
+    max: 100,
+    stepSize: 10,
+    callback: function(value) {
+                return value + ' m/s';
+              }
+  },
+  rainHeight: {
+    min: 0,
+    max: 50,
+    stepSize: 5,
+    callback: function(value) {
+                return value + ' mm/h';
+              }
+  }
+};
+
+//Function that returns the timestamp of one hour ago.
 window.lastHour = function() {
   var d = new Date();
   d.setHours(d.getHours() -1);
@@ -190,15 +243,17 @@ ddb.scan(scanParams, function(err, data) {
     stationsList = Array.from(stationsList);
     stationsList.sort();
     console.log("success", stationsList);
-    stationsList.forEach(function(elem, index) {
-      document.getElementById("chart-div").innerHTML += "<canvas id='chart" + index + "'></canvas><br>";
-    });
   }
 });
 
 //Queries the database for the sensor data and draws the charts.
 window.refreshSensorChart = function() {
+  //Clears chart div.
+  document.getElementById("chart-div").innerHTML = "";
   stationsList.forEach(function(id, index) {
+    //Adds canvas to chart div.
+    document.getElementById("chart-div").innerHTML += "<canvas id='chart" + index + "'></canvas><br>";
+
     //Parameters of the query.
     var params = {
       ExpressionAttributeValues: {
@@ -220,6 +275,7 @@ window.refreshSensorChart = function() {
       } else {
         console.log("success", data);
 
+        var sensor = document.getElementById("sensor-select").value;
         var time=[];
         var dataset=[];
 
@@ -227,7 +283,6 @@ window.refreshSensorChart = function() {
           var d = new Date();
           d.setTime(element.timestamp.N);
           time.push(d);
-          var sensor = document.getElementById("sensor-select").value;
           dataset.push(element.payload.M[sensor].S);
         });
 
@@ -245,14 +300,28 @@ window.refreshSensorChart = function() {
             }]
           },
           "options": {
+            tooltips: {
+              callbacks: {
+                label: function(tooltipItems, data) {
+                        return tooltipItems.yLabel + units[sensor];
+                      }
+              }
+            },
             responsive: true,
             scales: {
               xAxes: [{
                 type: 'time',
                 time: {
                   unit: 'minute',
-                  stepSize: 10
+                  stepSize: 10,
+                },
+                ticks: {
+                  min: lastHour(),
+                  max: new Date()
                 }
+              }],
+              yAxes: [{
+                ticks: yAxisSettings[sensor]
               }]
             }
           }
