@@ -1,98 +1,53 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 
 /*
- * NOTE: You must set the following string constants prior to running this
- * example application.
- */
+ * The awsConfiguration object is used to store the credentials to connect to AWS service.
+ * MAKE SHURE to insert the correct name for your endpoint, the correct Cognito PoolID
+ * and the correct AWS region.
+*/
 var awsConfiguration = {
-   poolId: 'us-east-1:5ae4946b-fba9-42a3-b03a-8cf97ce235f0', // 'YourCognitoIdentityPoolId'
-   host: "a29wnmzjyb35x8-ats.iot.us-east-1.amazonaws.com", // 'YourAwsIoTEndpoint', e.g. 'prefix.iot.us-east-1.amazonaws.com'
-   region: 'us-east-1' // 'YourAwsRegion', e.g. 'us-east-1'
+   poolId: 'us-east-1:5ae4946b-fba9-42a3-b03a-8cf97ce235f0',
+   host: "a29wnmzjyb35x8-ats.iot.us-east-1.amazonaws.com",
+   region: 'us-east-1'
 };
 module.exports = awsConfiguration;
 
-
 },{}],2:[function(require,module,exports){
 
-//
-// Instantiate the AWS SDK and configuration objects.  The AWS SDK for
-// JavaScript (aws-sdk) is used for Cognito Identity/Authentication, and
-// the AWS IoT SDK for JavaScript (aws-iot-device-sdk) is used for the
-// WebSocket connection to AWS IoT and device shadow APIs.
-//
+//Loading the AWS SDK and the configuration objects.
 var AWS = require('aws-sdk');
 var AWSIoTData = require('aws-iot-device-sdk');
 var AWSConfiguration = require('./aws-configuration.js');
-
 console.log('Loaded AWS SDK for JavaScript and AWS IoT SDK for Node.js');
 
-//
-// Remember our current subscription topic here.
-//
-var currentlySubscribedTopic = 'stations/+';
 
-var stationsStatus = {};
-var currentStation = "";
 
 //
-// Create a client id to use when connecting to AWS IoT.
+// Configuration of the AWS SDK.
 //
+
+//The id of the MQTT client.
 var clientId = 'dashboard-' + (Math.floor((Math.random() * 100000) + 1));
 
-//
-// Initialize our configuration.
-//
 AWS.config.region = AWSConfiguration.region;
-
 AWS.config.credentials = new AWS.CognitoIdentityCredentials({
    IdentityPoolId: AWSConfiguration.poolId
 });
 
-//
-// Create the AWS IoT device object.  Note that the credentials must be
-// initialized with empty strings; when we successfully authenticate to
-// the Cognito Identity Pool, the credentials will be dynamically updated.
-//
+//Tme mqttClient object used for retrieving the messages from the MQTT server.
 const mqttClient = AWSIoTData.device({
-   //
-   // Set the AWS region we will operate in.
-   //
-   region: AWS.config.region,
-   //
-   ////Set the AWS IoT Host Endpoint
-   host:AWSConfiguration.host,
-   //
-   // Use the clientId created earlier.
-   //
-   clientId: clientId,
-   //
-   // Connect via secure WebSocket
-   //
-   protocol: 'wss',
-   //
-   // Set the maximum reconnect time to 8 seconds; this is a browser application
-   // so we don't want to leave the user waiting too long for reconnection after
-   // re-connecting to the network/re-opening their laptop/etc...
-   //
-   maximumReconnectTimeMs: 8000,
-   //
-   // Enable console debugging information (optional)
-   //
-   debug: true,
-   //
-   // IMPORTANT: the AWS access key ID, secret key, and sesion token must be
-   // initialized with empty strings.
-   //
+   region: AWS.config.region, //Set the AWS region we will operate in
+   host:AWSConfiguration.host, //Set the AWS IoT Host Endpoint
+   clientId: clientId, //The clientId created earlier
+   protocol: 'wss', //Connect via secure WebSocket
+   maximumReconnectTimeMs: 8000, //Set the maximum reconnect time to 8 seconds
+   debug: true, //Enable console debugging information
    accessKeyId: '',
    secretKey: '',
    sessionToken: ''
 });
 
-//
-// Attempt to authenticate to the Cognito Identity Pool.  Note that this
-// example only supports use of a pool which allows unauthenticated
-// identities.
-//
+//The cognitoIdentity used for authentication.
 var cognitoIdentity = new AWS.CognitoIdentity();
 AWS.config.credentials.get(function(err, data) {
    if (!err) {
@@ -102,10 +57,6 @@ AWS.config.credentials.get(function(err, data) {
       };
       cognitoIdentity.getCredentialsForIdentity(params, function(err, data) {
          if (!err) {
-            //
-            // Update our latest AWS credentials; the MQTT client will use these
-            // during its next reconnect attempt.
-            //
             mqttClient.updateWebSocketCredentials(data.Credentials.AccessKeyId,
                data.Credentials.SecretKey,
                data.Credentials.SessionToken);
@@ -120,52 +71,13 @@ AWS.config.credentials.get(function(err, data) {
    }
 });
 
-//
-// Connect handler; update div visibility and fetch latest shadow documents.
-// Subscribe to lifecycle events on the first connect event.
-//
-window.mqttClientConnectHandler = function() {
-   console.log('connect');
-   mqttClient.subscribe(currentlySubscribedTopic);
-};
 
 
 //
-// Utility function to determine if a value has been defined.
+// UI funtions.
 //
-window.isUndefined = function(value) {
-   return typeof value === 'undefined' || typeof value === null;
-};
 
-//
-// Message handler for lifecycle events; create/destroy divs as clients
-// connect/disconnect.
-//
-window.mqttClientMessageHandler = function(topic, payload) {
-   //console.log('message: ' + topic + ':' + payload.toString());
-   var stationNum = Object.keys(stationsStatus).length;
-   stationsStatus[topic.slice(9)]=JSON.parse(payload.toString());
-   //console.log(stationsStatus);
-   if (Object.keys(stationsStatus).length!= stationNum) {
-     document.getElementById("station-select").innerHTML += '<option value="'+ topic.slice(9) + '">' + topic.slice(9) + '</option>';
-   }
-   if (currentStation!="") updateInfo();
-};
-
-window.updateInfo = function() {
-   var infoTable = document.getElementById("station-info");
-   infoTable.rows.item(0).cells.item(1).innerHTML = stationsStatus[currentStation].temperature + " °C";
-   infoTable.rows.item(1).cells.item(1).innerHTML = stationsStatus[currentStation].humidity + "%";
-   infoTable.rows.item(2).cells.item(1).innerHTML = stationsStatus[currentStation].windDirection  + "°";
-   infoTable.rows.item(3).cells.item(1).innerHTML = stationsStatus[currentStation].windIntensity + " m/s";
-   infoTable.rows.item(4).cells.item(1).innerHTML = stationsStatus[currentStation].rainHeight + " mm/h";
-}
-
-window.changeStation = function() {
-   currentStation = document.getElementById("station-select").value;
-   updateInfo();
-}
-
+//Function for switching active tab.
 window.switchView = function(activate) {
   if (activate=="current-status-link"){
     document.getElementById("current-status-link").className = "active";
@@ -180,25 +92,94 @@ window.switchView = function(activate) {
   }
 }
 
+
+
 //
-// Install connect/reconnect event handlers.
+// Current status.
 //
+
+//The topic where the enviromental stations publish the sensors data.
+var stationTopic = 'stations/+';
+
+//Variable storing the current status of the stations.
+var stationsStatus = {};
+
+//Variable storing the name of station we are currently displaying.
+var currentStation = "";
+
+//Connect handler: once the MQTT client has succesfully connected to the MQTT server
+//it subsribes to the stationTopic
+window.mqttClientConnectHandler = function() {
+   console.log('connected to MQTT server');
+   mqttClient.subscribe(stationTopic);
+   console.log("subscribed to", stationTopic);
+};
+
+//Function for updating the table containing the current status of the station.
+window.updateInfo = function() {
+   var infoTable = document.getElementById("station-info");
+   infoTable.rows.item(0).cells.item(1).innerHTML = stationsStatus[currentStation].temperature + " °C";
+   infoTable.rows.item(1).cells.item(1).innerHTML = stationsStatus[currentStation].humidity + "%";
+   infoTable.rows.item(2).cells.item(1).innerHTML = stationsStatus[currentStation].windDirection  + "°";
+   infoTable.rows.item(3).cells.item(1).innerHTML = stationsStatus[currentStation].windIntensity + " m/s";
+   infoTable.rows.item(4).cells.item(1).innerHTML = stationsStatus[currentStation].rainHeight + " mm/h";
+}
+
+//Message handler: upon reciving a message if it's relative to a new station it adds it to the selection menu
+//then it saves it's status in the variable stationsStatus and finally updates the table.
+window.mqttClientMessageHandler = function(topic, payload) {
+   console.log('message: ' + topic + ':' + payload.toString());
+   if (stationsStatus[topic.slice(9)]==undefined) {
+     document.getElementById("station-select").innerHTML += '<option value="'+ topic.slice(9) + '">' + topic.slice(9) + '</option>';
+   }
+   stationsStatus[topic.slice(9)]=JSON.parse(payload.toString());
+   if (currentStation!="") updateInfo();
+};
+
+//Function for changing the currently displayed station.
+window.changeStation = function() {
+   currentStation = document.getElementById("station-select").value;
+   updateInfo();
+}
+
+//Installing the connect and message handlers.
 mqttClient.on('connect', window.mqttClientConnectHandler);
 mqttClient.on('message', window.mqttClientMessageHandler);
 
 
-// Create DynamoDB service object
+//
+// Past status.
+//
+
+//DynamoDB service object.
 var ddb = new AWS.DynamoDB({apiVersion: '2012-08-10'});
+
+//List of stations in the database.
 var stationsList = new Set();
 
+//Returns the timestamp of one hour ago.
+window.lastHour = function() {
+  var d = new Date();
+  d.setHours(d.getHours() -1);
+  return d.getTime();
+}
+
+//Parameters for the scan of the database.
 var scanParams = {
   ExpressionAttributeNames:{
       "#id": "id",
+      "#time": "timestamp"
   },
+  ExpressionAttributeValues: {
+      ":lastHour":{N:lastHour().toString()}
+  },
+  FilterExpression: "#time >= :lastHour",
   ProjectionExpression: '#id',
   TableName: 'EnvironmentalStations'
 };
 
+//Scans the table EnvironmentalStations,
+//adds the id of the stations in stationsList and in the select menu.
 ddb.scan(scanParams, function(err, data) {
   if (err) {
     console.log("Error", err);
@@ -208,33 +189,17 @@ ddb.scan(scanParams, function(err, data) {
     });
     stationsList = Array.from(stationsList);
     stationsList.sort();
+    console.log("success", stationsList);
     stationsList.forEach(function(elem, index) {
       document.getElementById("chart-div").innerHTML += "<canvas id='chart" + index + "'></canvas><br>";
     });
   }
 });
 
+//Queries the database for the sensor data and draws the charts.
 window.refreshSensorChart = function() {
-  function lastHour() {
-    var d = new Date();
-    d.setHours(d.getHours() -1);
-    return d.getTime();
-  }
-
-  function dateToHMS(d) {
-    function addZero(i) {
-      if (i < 10) {
-        i = "0" + i;
-      }
-      return i;
-    }
-    var h = addZero(d.getHours());
-    var m = addZero(d.getMinutes());
-    var s = addZero(d.getSeconds());
-    return h + ":" + m + ":" + s;
-  }
-
   stationsList.forEach(function(id, index) {
+    //Parameters of the query.
     var params = {
       ExpressionAttributeValues: {
           ":station":{S:id},
@@ -248,10 +213,12 @@ window.refreshSensorChart = function() {
       TableName: 'EnvironmentalStations'
     };
 
+    //Queries the data from the last hour for the selected sensor.
     ddb.query(params, function(err, data) {
       if (err) {
         console.log("Error", err);
       } else {
+        console.log("success", data);
 
         var time=[];
         var dataset=[];
@@ -259,15 +226,12 @@ window.refreshSensorChart = function() {
         data.Items.forEach(function(element) {
           var d = new Date();
           d.setTime(element.timestamp.N);
-          time.push(dateToHMS(d));
+          time.push(d);
           var sensor = document.getElementById("sensor-select").value;
-          console.log(sensor);
           dataset.push(element.payload.M[sensor].S);
         });
 
-        console.log(dataset);
-
-
+        //Draws the chart.
         let chart = new Chart(document.getElementById('chart'+index).getContext('2d'), {
           "type": "line",
           "data": {
@@ -281,17 +245,21 @@ window.refreshSensorChart = function() {
             }]
           },
           "options": {
-            responsive: true
+            responsive: true,
+            scales: {
+              xAxes: [{
+                type: 'time',
+                time: {
+                  unit: 'minute',
+                  stepSize: 10
+                }
+              }]
+            }
           }
         });
-
-        console.log(chart);
-
       }
     });
-
   });
-
 }
 
 },{"./aws-configuration.js":1,"aws-iot-device-sdk":"aws-iot-device-sdk","aws-sdk":"aws-sdk"}]},{},[2]);
