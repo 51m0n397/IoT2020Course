@@ -71,6 +71,9 @@ AWS.config.credentials.get(function(err, data) {
    }
 });
 
+//DynamoDB service object.
+var ddb = new AWS.DynamoDB({apiVersion: '2012-08-10'});
+
 
 
 //
@@ -92,17 +95,82 @@ window.switchView = function(activate) {
   }
 }
 
+//
+// Building station list and initializing current status.
+//
+
+//List of stations in the database.
+var stationsList = new Set();
+
+//Variable storing the current status of the stations.
+var stationsStatus = {};
+
+//Parameters for the scan of the database.
+var scanParams = {
+  ExpressionAttributeNames:{
+      "#id": "id",
+  },
+  ProjectionExpression: '#id',
+  TableName: 'EnvironmentalStations'
+};
+
+//Scans the table EnvironmentalStations,
+//adds the id of the stations in stationsList and in the select menu,
+//add the stations latest status to stationsStatus;
+ddb.scan(scanParams, function(err, data) {
+  if (err) {
+    console.log("Error", err);
+  } else {
+    data.Items.forEach(function(element) {
+      stationsList.add(element.id.S);
+    });
+    stationsList = Array.from(stationsList);
+    stationsList.sort();
+    console.log("success", stationsList);
+
+    stationsList.forEach(function(id) {
+      //Parameters of the query.
+      var queryParams = {
+        ExpressionAttributeValues: {
+            ":station":{S:id}
+        },
+        ExpressionAttributeNames:{
+            "#id": "id"
+        },
+        KeyConditionExpression: "#id = :station",
+        TableName: 'EnvironmentalStations'
+      };
+
+      console.log("prova", id);
+
+      //Queries the data from the selected station.
+      ddb.query(queryParams, function(err, data) {
+        if (err) {
+          console.log("Error", err);
+        } else {
+          console.log("success", data.Items.reverse()[0]);
+          //Exploiting the fact that the data is already ordered.
+          var latest = data.Items.reverse()[0];
+          latest.payload.humidity = latest.payload.M.humidity.S;
+          latest.payload.temperature = latest.payload.M.temperature.S;
+          latest.payload.windDirection = latest.payload.M.windDirection.S;
+          latest.payload.windIntensity = latest.payload.M.windIntensity.S;
+          latest.payload.rainHeight = latest.payload.M.rainHeight.S;
+          stationsStatus[latest.id.S]=latest.payload;
+          document.getElementById("station-select").innerHTML += '<option value="'+ latest.id.S + '">' + latest.id.S + '</option>';
+        }
+      });
+    });
+  }
+});
 
 
 //
-// Current status.
+// Subscibing to MQTT topic and updating current status.
 //
 
 //The topic where the environmental stations publish the sensors data.
 var stationTopic = 'stations/+';
-
-//Variable storing the current status of the stations.
-var stationsStatus = {};
 
 //Variable storing the name of the station we are currently displaying.
 var currentStation = "";
@@ -147,15 +215,12 @@ mqttClient.on('connect', window.mqttClientConnectHandler);
 mqttClient.on('message', window.mqttClientMessageHandler);
 
 
+
 //
 // Past status.
 //
 
-//DynamoDB service object.
-var ddb = new AWS.DynamoDB({apiVersion: '2012-08-10'});
 
-//List of stations in the database.
-var stationsList = new Set();
 
 //Units for sensors data.
 var units = {
@@ -216,35 +281,6 @@ window.lastHour = function() {
   d.setHours(d.getHours() -1);
   return d.getTime();
 }
-
-//Parameters for the scan of the database.
-var scanParams = {
-  ExpressionAttributeNames:{
-      "#id": "id",
-      "#time": "timestamp"
-  },
-  ExpressionAttributeValues: {
-      ":lastHour":{N:lastHour().toString()}
-  },
-  FilterExpression: "#time >= :lastHour",
-  ProjectionExpression: '#id',
-  TableName: 'EnvironmentalStations'
-};
-
-//Scans the table EnvironmentalStations,
-//adds the id of the stations in stationsList and in the select menu.
-ddb.scan(scanParams, function(err, data) {
-  if (err) {
-    console.log("Error", err);
-  } else {
-    data.Items.forEach(function(element) {
-      stationsList.add(element.id.S);
-    });
-    stationsList = Array.from(stationsList);
-    stationsList.sort();
-    console.log("success", stationsList);
-  }
-});
 
 //Queries the database for the sensor data and draws the charts.
 window.refreshSensorChart = function() {
