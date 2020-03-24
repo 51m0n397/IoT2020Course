@@ -57,7 +57,7 @@ class EnvironmentalStation(threading.Thread):
 #Run method of the environmentalStation thread.
 #It starts by configuring the MQTT client.
 #Then it enters a loop in which it tries to connect to the broker,
-#it updates the values of the sensors and publishes them
+#it updates the values of the sensors and publishes them with QoS 0
 #and finally it disconnects and waits for "time" seconds.
 #It exits from the loop when the main thread sets the event quit.
     def run(self):
