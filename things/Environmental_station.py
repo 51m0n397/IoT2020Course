@@ -18,11 +18,11 @@ class EnvironmentalStation(threading.Thread):
 
 #Method that simulates the collecting of data from the sensors by randomly generating the numbers.
     def updateSensors(self):
-        self.temperature = random.randint(-50, 51)
-        self.humidity = random.randint(0, 101)
-        self.windDirection = random.randint(0, 361)
-        self.windIntensity = random.randint(0, 101)
-        self.rainHeight = random.randint(0, 51)
+        self.temperature = random.randint(-50, 50)
+        self.humidity = random.randint(0, 100)
+        self.windDirection = random.randint(0, 360)
+        self.windIntensity = random.randint(0, 100)
+        self.rainHeight = random.randint(0, 50)
 
 #Method for publishing the current status of the sensors on the MQTT channel.
 #It takes in input a number representing the QoS level.
