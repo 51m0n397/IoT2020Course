@@ -34,7 +34,7 @@ AWS.config.credentials = new AWS.CognitoIdentityCredentials({
    IdentityPoolId: AWSConfiguration.poolId
 });
 
-//Tme mqttClient object used for retrieving the messages from the MQTT server.
+//The mqttClient object used for retrieving the messages from the MQTT server.
 const mqttClient = AWSIoTData.device({
    region: AWS.config.region, //Set the AWS region we will operate in
    host:AWSConfiguration.host, //Set the AWS IoT Host Endpoint
@@ -74,7 +74,7 @@ AWS.config.credentials.get(function(err, data) {
 
 
 //
-// UI funtions.
+// UI functions.
 //
 
 //Function for switching active tab.
@@ -98,17 +98,17 @@ window.switchView = function(activate) {
 // Current status.
 //
 
-//The topic where the enviromental stations publish the sensors data.
+//The topic where the environmental stations publish the sensors data.
 var stationTopic = 'stations/+';
 
 //Variable storing the current status of the stations.
 var stationsStatus = {};
 
-//Variable storing the name of station we are currently displaying.
+//Variable storing the name of the station we are currently displaying.
 var currentStation = "";
 
-//Connect handler: once the MQTT client has succesfully connected to the MQTT server
-//it subsribes to the stationTopic
+//Connect handler: once the MQTT client has successfully connected to the MQTT server
+//it subscribes to the stationTopic
 window.mqttClientConnectHandler = function() {
    console.log('connected to MQTT server');
    mqttClient.subscribe(stationTopic);
@@ -125,7 +125,7 @@ window.updateInfo = function() {
    infoTable.rows.item(4).cells.item(1).innerHTML = stationsStatus[currentStation].rainHeight + " mm/h";
 }
 
-//Message handler: upon reciving a message if it's relative to a new station it adds it to the selection menu
+//Message handler: upon receiving a message if it's relative to a new station it adds it to the selection menu
 //then it saves it's status in the variable stationsStatus and finally updates the table.
 window.mqttClientMessageHandler = function(topic, payload) {
    console.log('message: ' + topic + ':' + payload.toString());
@@ -157,7 +157,7 @@ var ddb = new AWS.DynamoDB({apiVersion: '2012-08-10'});
 //List of stations in the database.
 var stationsList = new Set();
 
-//Returns the timestamp of one hour ago.
+//Function that // REVIEW: eturns the timestamp of one hour ago.
 window.lastHour = function() {
   var d = new Date();
   d.setHours(d.getHours() -1);
