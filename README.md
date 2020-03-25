@@ -1,4 +1,4 @@
-The folder **things** contains a python script that simulates multiple IoT devices.
+The folder **environmental_station** contains a python script that simulates multiple IoT devices.
 The devices are environmental stations capable of measuring temperature, humidity, wind direction, wind intensity and rain height.
 
 The values of the sensors are published on an MQTT channel. The MQTT is managed using AWS IoT.
