@@ -12,12 +12,12 @@
     </div>
 
   <div class="topnav">
-    <a class="active" id="current-status-link" onClick="switchView('current-status-link')">Current status</a>
-    <a class="inactive" id="past-status-link" onClick="switchView('past-status-link')">Past status</a>
+    <a class="active" id="current-values-link" onClick="switchView('current-values-link')">Current values</a>
+    <a class="inactive" id="past-values-link" onClick="switchView('past-values-link')">Past values</a>
   </div>
 </div>
 
-   <div id="current-status-div">
+   <div id="current-values-div">
      <div align="center" style="padding:15px;">
        <select id="station-select" onChange="changeStation()">
          <option disabled selected value> -- select an option -- </option>
@@ -47,7 +47,7 @@
      </table>
    </div>
 
-   <div id="past-status-div" style="display:none;">
+   <div id="past-values-div" style="display:none;">
      <div align="center" style="padding:15px;">
        <select id="sensor-select" onChange="refreshSensorChart()">
          <option disabled selected value> -- select an option -- </option>

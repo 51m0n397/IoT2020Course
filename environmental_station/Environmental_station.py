@@ -24,7 +24,7 @@ class EnvironmentalStation(threading.Thread):
         self.windIntensity = random.randint(0, 100)
         self.rainHeight = random.randint(0, 50)
 
-#Method for publishing the current status of the sensors on the MQTT channel.
+#Method for publishing the current values of the sensors on the MQTT channel.
 #It takes in input a number representing the QoS level.
 #The messages are published on the topic station/<NAME_OF_STATION>.
     def publish(self, QoS):

@@ -82,28 +82,28 @@ var ddb = new AWS.DynamoDB({apiVersion: '2012-08-10'});
 
 //Function for switching active tab.
 window.switchView = function(activate) {
-  if (activate=="current-status-link"){
-    document.getElementById("current-status-link").className = "active";
-    document.getElementById("past-status-link").className = "inactive";
-    document.getElementById('current-status-div').style.display = 'block';
-    document.getElementById('past-status-div').style.display = 'none';
+  if (activate=="current-values-link"){
+    document.getElementById("current-values-link").className = "active";
+    document.getElementById("past-values-link").className = "inactive";
+    document.getElementById('current-values-div').style.display = 'block';
+    document.getElementById('past-values-div').style.display = 'none';
   } else {
-    document.getElementById("current-status-link").className = "inactive";
-    document.getElementById("past-status-link").className = "active";
-    document.getElementById('current-status-div').style.display = 'none';
-    document.getElementById('past-status-div').style.display = 'block';
+    document.getElementById("current-values-link").className = "inactive";
+    document.getElementById("past-values-link").className = "active";
+    document.getElementById('current-values-div').style.display = 'none';
+    document.getElementById('past-values-div').style.display = 'block';
   }
 }
 
 //
-// Building station list and initializing current status.
+// Building station list and initializing current values.
 //
 
 //List of stations in the database.
 var stationsList = new Set();
 
-//Variable storing the current status of the stations.
-var stationsStatus = {};
+//Variable storing the current values of sensors of the stations.
+var stationsValues = {};
 
 //Parameters for the scan of the database.
 var scanParams = {
@@ -116,7 +116,7 @@ var scanParams = {
 
 //Scans the table EnvironmentalStations,
 //adds the id of the stations in stationsList and in the select menu,
-//add the stations latest status to stationsStatus;
+//add the stations latest values to stationsValues;
 ddb.scan(scanParams, function(err, data) {
   if (err) {
     console.log("Error", err);
@@ -156,7 +156,7 @@ ddb.scan(scanParams, function(err, data) {
           latest.payload.windDirection = latest.payload.M.windDirection.S;
           latest.payload.windIntensity = latest.payload.M.windIntensity.S;
           latest.payload.rainHeight = latest.payload.M.rainHeight.S;
-          stationsStatus[latest.id.S]=latest.payload;
+          stationsValues[latest.id.S]=latest.payload;
           document.getElementById("station-select").innerHTML += '<option value="'+ latest.id.S + '">' + latest.id.S + '</option>';
         }
       });
@@ -166,7 +166,7 @@ ddb.scan(scanParams, function(err, data) {
 
 
 //
-// Subscibing to MQTT topic and updating current status.
+// Subscibing to MQTT topic and updating current values.
 //
 
 //The topic where the environmental stations publish the sensors data.
@@ -183,24 +183,24 @@ window.mqttClientConnectHandler = function() {
    console.log("subscribed to", stationTopic);
 };
 
-//Function for updating the table containing the current status of the station.
+//Function for updating the table containing the current values of the station.
 window.updateInfo = function() {
    var infoTable = document.getElementById("station-info");
-   infoTable.rows.item(0).cells.item(1).innerHTML = stationsStatus[currentStation].temperature + " °C";
-   infoTable.rows.item(1).cells.item(1).innerHTML = stationsStatus[currentStation].humidity + "%";
-   infoTable.rows.item(2).cells.item(1).innerHTML = stationsStatus[currentStation].windDirection  + "°";
-   infoTable.rows.item(3).cells.item(1).innerHTML = stationsStatus[currentStation].windIntensity + " m/s";
-   infoTable.rows.item(4).cells.item(1).innerHTML = stationsStatus[currentStation].rainHeight + " mm/h";
+   infoTable.rows.item(0).cells.item(1).innerHTML = stationsValues[currentStation].temperature + " °C";
+   infoTable.rows.item(1).cells.item(1).innerHTML = stationsValues[currentStation].humidity + "%";
+   infoTable.rows.item(2).cells.item(1).innerHTML = stationsValues[currentStation].windDirection  + "°";
+   infoTable.rows.item(3).cells.item(1).innerHTML = stationsValues[currentStation].windIntensity + " m/s";
+   infoTable.rows.item(4).cells.item(1).innerHTML = stationsValues[currentStation].rainHeight + " mm/h";
 }
 
 //Message handler: upon receiving a message if it's relative to a new station it adds it to the selection menu
-//then it saves it's status in the variable stationsStatus and finally updates the table.
+//then it saves it's values in the variable stationsValues and finally updates the table.
 window.mqttClientMessageHandler = function(topic, payload) {
    console.log('message: ' + topic + ':' + payload.toString());
-   if (stationsStatus[topic.slice(9)]==undefined) {
+   if (stationsValues[topic.slice(9)]==undefined) {
      document.getElementById("station-select").innerHTML += '<option value="'+ topic.slice(9) + '">' + topic.slice(9) + '</option>';
    }
-   stationsStatus[topic.slice(9)]=JSON.parse(payload.toString());
+   stationsValues[topic.slice(9)]=JSON.parse(payload.toString());
    if (currentStation!="") updateInfo();
 };
 
@@ -217,7 +217,7 @@ mqttClient.on('message', window.mqttClientMessageHandler);
 
 
 //
-// Past status.
+// Past values.
 //
 
 
