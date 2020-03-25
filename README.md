@@ -8,3 +8,5 @@ The folder **web_client** contains a website that provides a dashboard capable o
 The dashboard is accessible at the link https://51m0n397.github.io/IoTAssignment1/web_client/
 
 For further information check this post https://www.hackster.io/simone-bartolini/iot-virtual-environmental-station-using-aws-c01649
+
+For a demonstration of the project check this video https://www.youtube.com/watch?v=9jjE9SlO0yw
