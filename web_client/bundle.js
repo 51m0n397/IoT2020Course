@@ -198,6 +198,7 @@ window.updateInfo = function() {
 window.mqttClientMessageHandler = function(topic, payload) {
    console.log('message: ' + topic + ':' + payload.toString());
    if (stationsValues[topic.slice(9)]==undefined) {
+     stationsList.push(topic.slice(9));
      document.getElementById("station-select").innerHTML += '<option value="'+ topic.slice(9) + '">' + topic.slice(9) + '</option>';
    }
    stationsValues[topic.slice(9)]=JSON.parse(payload.toString());
