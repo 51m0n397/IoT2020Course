@@ -1,3 +1,5 @@
+This has been developed as part of the IoT course during my Engineering in Computer Science master's degree at Sapienza - University of Rome.
+
 The folder **environmental_station** contains a python script that simulates multiple IoT devices.
 The devices are environmental stations capable of measuring temperature, humidity, wind direction, wind intensity and rain height.
 
@@ -10,3 +12,8 @@ The dashboard is accessible at the link https://51m0n397.github.io/IoTAssignment
 For further information check this post https://www.hackster.io/simone-bartolini/iot-virtual-environmental-station-using-aws-c01649
 
 For a demonstration of the project check this video https://www.youtube.com/watch?v=9jjE9SlO0yw
+
+
+
+
+Simone Bartolini https://www.linkedin.com/in/simone-bartolini-9628561a3
