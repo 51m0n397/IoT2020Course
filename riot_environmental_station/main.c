@@ -48,9 +48,15 @@ static int pub(char* topic, char* data, int qos){
   unsigned flags = EMCUTE_QOS_0;
 
   switch (qos) {
-      case 1:     flags |= EMCUTE_QOS_1;
-      case 2:     flags |= EMCUTE_QOS_2;
-      default:    flags |= EMCUTE_QOS_0;
+      case 1:
+        flags |= EMCUTE_QOS_1;
+        break;
+      case 2:
+        flags |= EMCUTE_QOS_2;
+        break;
+      default:
+        flags |= EMCUTE_QOS_0;
+        break;
   }
 
   printf("pub with topic: %s and name %s and flags 0x%02x\n", topic, data, (int)flags);
