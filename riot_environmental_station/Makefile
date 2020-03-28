@@ -1,5 +1,5 @@
 # name of your application
-APPLICATION = emcute_mqttsn
+APPLICATION = env_station
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= native
@@ -30,6 +30,8 @@ USEMODULE += shell_commands
 USEMODULE += ps
 # For testing we also include the ping6 command and some stats
 USEMODULE += gnrc_icmpv6_echo
+
+USEMODULE += xtimer
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the

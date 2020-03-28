@@ -106,25 +106,27 @@ static void update_sensors(t_sensors* sensors){
 }
 
 static int cmd_env_station(int argc, char **argv){
-  if (argc < 2) {
-      printf("usage: %s <seconds>\n",
+  if (argc < 4) {
+      printf("usage: %s <address> <port> <seconds>\n",
               argv[0]);
       return 1;
   }
 
-  char topic[] = "stations/environmentalStation0";
+  char topic[64];
+  sprintf(topic,"stations/environmentalStation%d", 0);
+
   t_sensors sensors;
   char data[128];
 
   while(1){
-    if (con("fec0:affe::1", 1885)) {
+    if (con(argv[1], atoi(argv[2]))) {
       return 1;
     }
 
     update_sensors(&sensors);
 
-    sprintf(data, "'temperature': '%d', 'humidity': '%d', 'windDirection': '%d', "
-                  "'windIntensity': '%d', 'rainHeight': '%d'}",
+    sprintf(data, "{\"temperature\": \"%d\", \"humidity\": \"%d\", \"windDirection\": \"%d\", "
+                  "\"windIntensity\": \"%d\", \"rainHeight\": \"%d\"}",
                   sensors.temperature, sensors.humidity, sensors.windDirection,
                   sensors.windIntensity, sensors.rainHeight);
 
@@ -136,7 +138,7 @@ static int cmd_env_station(int argc, char **argv){
       return 1;
     }
 
-    sleep(atoi(argv[1]));
+    xtimer_sleep(atoi(argv[3]));
   }
 
   return 0;
