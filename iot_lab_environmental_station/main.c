@@ -140,7 +140,7 @@ static int cmd_env_station(int argc, char **argv){
   }
 
   char topic[64];
-  sprintf(topic,"stations/RiotOSEnvironmentalStation%d", atoi(argv[3]));
+  sprintf(topic,"stations/IotLabEnvironmentalStation%d", atoi(argv[3]));
 
   t_sensors sensors;
   char data[128];
