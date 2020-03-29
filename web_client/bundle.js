@@ -141,8 +141,6 @@ ddb.scan(scanParams, function(err, data) {
         TableName: 'EnvironmentalStations'
       };
 
-      console.log("prova", id);
-
       //Queries the data from the selected station.
       ddb.query(queryParams, function(err, data) {
         if (err) {
