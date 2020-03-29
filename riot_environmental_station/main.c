@@ -14,6 +14,7 @@
 static char stack[THREAD_STACKSIZE_DEFAULT];
 static msg_t queue[8];
 
+//struct containing the sensors data
 typedef struct sensors{
   int temperature;
   int humidity;
@@ -22,13 +23,14 @@ typedef struct sensors{
   int rainHeight;
 }t_sensors;
 
-//emcute mqtt library thread
+//emcute mqtt thread
 static void *emcute_thread(void *arg){
     (void)arg;
     emcute_run(EMCUTE_PORT, EMCUTE_ID);
-    return NULL;    /* should never be reached */
+    return NULL;
 }
 
+//function for disconnecting from the mqttsn gateway
 static int discon(void){
     int res = emcute_discon();
     if (res == EMCUTE_NOGW) {
@@ -43,6 +45,10 @@ static int discon(void){
     return 0;
 }
 
+//function for publishing data
+//the first argument is the string of the topic
+//the second argument is the message to send
+//the third argument is the QoS level
 static int pub(char* topic, char* data, int qos){
   emcute_topic_t t;
   unsigned flags = EMCUTE_QOS_0;
@@ -59,33 +65,34 @@ static int pub(char* topic, char* data, int qos){
         break;
   }
 
-  printf("pub with topic: %s and name %s and flags 0x%02x\n", topic, data, (int)flags);
 
-  /* step 1: get topic id */
+
+  //step 1: get topic id
   t.name = topic;
   if (emcute_reg(&t) != EMCUTE_OK) {
       puts("error: unable to obtain topic ID");
       return 1;
   }
 
-  /* step 2: publish data */
+  //step 2: publish data
   if (emcute_pub(&t, data, strlen(data), flags) != EMCUTE_OK) {
       printf("error: unable to publish data to topic '%s [%i]'\n",
               t.name, (int)t.id);
       return 1;
   }
 
-  printf("Published %i bytes to topic '%s [%i]'\n",
-          (int)strlen(data), t.name, t.id);
+  printf("published %s on topic %s\n", data, topic);
 
   return 0;
 }
 
+//function for connecting to the mqttsn gateway
+//the first argument is the address the second is the port
 static int con(char* addr, int port){
   sock_udp_ep_t gw = { .family = AF_INET6, .port = EMCUTE_PORT };
   gw.port = port;
 
-  /* parse address */
+  //parse address
   if (ipv6_addr_from_str((ipv6_addr_t *)&gw.addr.ipv6, addr) == NULL) {
       printf("error parsing IPv6 address\n");
       return 1;
@@ -99,10 +106,12 @@ static int con(char* addr, int port){
   return 0;
 }
 
+//function for generating random integer in [lower, upper]
 static int rand_int(int lower, int upper) {
   return (rand() % (upper - lower + 1)) + lower;
 }
 
+//function for updating the sensor data
 static void update_sensors(t_sensors* sensors){
   sensors->temperature = rand_int(-50, 50);
   sensors->humidity = rand_int(0, 100);
@@ -111,22 +120,26 @@ static void update_sensors(t_sensors* sensors){
   sensors->rainHeight = rand_int(0, 50);
 }
 
+//enviromental station shell command
+//it takes in input the address and the port of the gateway
+//the id of the station and the seconds to pass between each publish
+//it regularly updates the sensor data and publishes it to the topic
+//stations/RiotOSEnvironmentalStation + the id of the station
 static int cmd_env_station(int argc, char **argv){
-  if (argc < 4) {
-      printf("usage: %s <address> <port> <seconds>\n",
-              argv[0]);
+  if (argc < 5) {
+      printf("usage: %s <address> <port> <id> <seconds>\n", argv[0]);
       return 1;
   }
 
   char topic[64];
-  sprintf(topic,"stations/environmentalStation%d", 0);
+  sprintf(topic,"stations/RiotOSEnvironmentalStation%d", atoi(argv[3]));
 
   t_sensors sensors;
   char data[128];
 
   while(1){
     if (con(argv[1], atoi(argv[2]))) {
-      return 1;
+      continue; //if it cannot connect it retries
     }
 
     update_sensors(&sensors);
@@ -137,14 +150,13 @@ static int cmd_env_station(int argc, char **argv){
                   sensors.windIntensity, sensors.rainHeight);
 
     if (pub(topic, data, 0)){
-      return 1;
+      discon(); //if it cannot publish it disconnects and restarts the loop
+      continue;
     }
 
-    if (discon()){
-      return 1;
-    }
+    discon();
 
-    xtimer_sleep(atoi(argv[3]));
+    xtimer_sleep(atoi(argv[4]));
   }
 
   return 0;
@@ -152,22 +164,22 @@ static int cmd_env_station(int argc, char **argv){
 
 
 static const shell_command_t shell_commands[] = {
-    { "env_station", "", cmd_env_station },
+    { "env_station", "Environmental station", cmd_env_station },
     { NULL, NULL, NULL }
 };
 
 int main(void){
-    /* the main thread needs a msg queue to be able to run `ping6`*/
+    //the main thread needs a msg queue to be able to run `ping6`
     msg_init_queue(queue, (sizeof(queue) / sizeof(msg_t)));
 
-    /* start the emcute thread */
+    //start the emcute thread
     thread_create(stack, sizeof(stack), EMCUTE_PRIO, 0,
                   emcute_thread, NULL, "emcute");
 
-    /* start shell */
+    //start shell
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(shell_commands, line_buf, SHELL_DEFAULT_BUFSIZE);
 
-    /* should be never reached */
+    //should be never reached
     return 0;
 }
