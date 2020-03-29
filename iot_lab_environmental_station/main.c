@@ -120,7 +120,7 @@ static void update_sensors(t_sensors* sensors){
   saul_reg_t* temp_dev = saul_reg_find_type(SAUL_SENSE_TEMP);
   phydat_t temp_data;
   saul_reg_read(temp_dev, &temp_data);
-  float temp = (float) temp_data.val;
+  float temp = (float) *temp_data.val;
   sensors->temperature = (int)round(temp/100);
   sensors->humidity = rand_int(0, 100);
   sensors->windDirection = rand_int(0, 360);
