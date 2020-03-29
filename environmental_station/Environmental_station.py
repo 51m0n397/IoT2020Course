@@ -103,7 +103,7 @@ while True:
 #creating the environmentalStation objects
 stationList = []
 for i in range(0, numStation):
-    stationList.append(EnvironmentalStation("environmentalStation" + str(i)))
+    stationList.append(EnvironmentalStation("VirtualEnvironmentalStation" + str(i)))
 
 #spawning the environmentalStation threads
 for station in stationList:
