@@ -148,9 +148,8 @@ ddb.scan(scanParams, function(err, data) {
         if (err) {
           console.log("Error", err);
         } else {
-          console.log("success", data.Items.reverse()[0]);
           //Exploiting the fact that the data is already ordered.
-          var latest = data.Items.reverse()[0];
+          var latest = data.Items[0];
           latest.payload.humidity = latest.payload.M.humidity.S;
           latest.payload.temperature = latest.payload.M.temperature.S;
           latest.payload.windDirection = latest.payload.M.windDirection.S;
