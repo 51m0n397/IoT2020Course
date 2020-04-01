@@ -50,6 +50,7 @@ while True:
 #subscribing to the topics
 ids = ids.split(", ")
 for id in ids:
+    print("subscribing to: stations/RiotOSEnvironmentalStation" + id)
     mqttSNClient.subscribe("stations/RiotOSEnvironmentalStation" + id)
 
 #waiting for user input to disconnect the clients and close the program
