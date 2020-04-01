@@ -1,0 +1,4 @@
+[submodule "riot_environmental_station/RIOT"]
+	path = riot_environmental_station/RIOT
+	url = https://github.com/RIOT-OS/RIOT.git
+	branch = 2019.04-branch
