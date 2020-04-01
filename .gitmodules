@@ -2,3 +2,6 @@
 	path = riot_environmental_station/RIOT
 	url = https://github.com/RIOT-OS/RIOT.git
 	branch = 2019.04-branch
+[submodule "MQTTSN-broker/mosquitto.rsmb"]
+	path = MQTTSN-broker/mosquitto.rsmb
+	url = https://github.com/eclipse/mosquitto.rsmb.git
