@@ -1,11 +1,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "shell.h"
 #include "msg.h"
 #include "net/emcute.h"
 #include "net/ipv6/addr.h"
+#include "saul.h"
+#include "saul_reg.h"
+#include "phydat.h"
 
 #define EMCUTE_PORT         (1883U)
 #define EMCUTE_ID           ("gertrud")
@@ -113,8 +117,26 @@ static int rand_int(int lower, int upper) {
 
 //function for updating the sensor data
 static void update_sensors(t_sensors* sensors){
-  sensors->temperature = rand_int(-50, 50);
-  sensors->humidity = rand_int(0, 100);
+  saul_reg_t* temp_dev = saul_reg_find_type(SAUL_SENSE_TEMP);
+  if (temp_dev==NULL){
+    sensors->temperature = rand_int(-50, 50);
+  } else {
+    phydat_t temp_data;
+    saul_reg_read(temp_dev, &temp_data);
+    float temp = (float) *temp_data.val;
+    sensors->temperature = (int)round(temp/100);
+  }
+
+  saul_reg_t* hum_dev = saul_reg_find_type(SAUL_SENSE_HUM);
+  if (hum_dev==NULL){
+    sensors->humidity = rand_int(0, 100);
+  } else {
+    phydat_t hum_data;
+    saul_reg_read(hum_dev, &hum_data);
+    float hum = (float) *hum_data.val;
+    sensors->humidity = (int)round(hum/100);
+  }
+
   sensors->windDirection = rand_int(0, 360);
   sensors->windIntensity = rand_int(0, 100);
   sensors->rainHeight = rand_int(0, 50);

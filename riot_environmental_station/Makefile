@@ -31,6 +31,9 @@ USEMODULE += ps
 # For testing we also include the ping6 command and some stats
 USEMODULE += gnrc_icmpv6_echo
 
+USEMODULE += saul_reg
+USEMODULE += saul_default
+
 USEMODULE += xtimer
 
 # Comment this out to disable code in RIOT that does safety checking
