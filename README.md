@@ -6,7 +6,7 @@ It has been developed as part of the IoT course during my Engineering in Compute
 
 
 ## Part 1: Python virtual environmental station
-In this first part the environmental station is simulated using a python script.
+In this first part the environmental stations are simulated using a python script.
 
 ### Architecture
 ![](/images/architecture1.png)
