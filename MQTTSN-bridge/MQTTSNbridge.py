@@ -14,7 +14,7 @@ class Callback:
     def messageArrived(self, topicName, payload, qos, retained, msgid):
         print(topicName, payload.decode("utf-8"))
         mqttClient.publish(topicName, payload.decode("utf-8"), qos)
-    return True
+        return True
 
 
 # Folder containing the certificates and the private key for
