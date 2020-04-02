@@ -3,7 +3,7 @@
 This is an example of an IoT environmental station capable of measuring temperature, humidity, wind direction, wind intensity and rain height.
 It has been developed as part of the IoT course during my Engineering in Computer Science master's degree at Sapienza - University of Rome.
 
-___
+
 
 ## Part 1: Python virtual environmental station
 In this first part the environmental station is simulated using a python script.
@@ -21,7 +21,7 @@ For information about how to run this project check my blogpost on Hackster http
 ### Demonstration
 You can see the project in action in this video https://www.youtube.com/watch?v=9jjE9SlO0yw
 
-___
+
 
 ## Part 2: RiotOS environmental
 In this second part the python script is replaced by a program for RiotOS, an operating system for embedded devices, running on the emulated "native" board.
@@ -43,6 +43,6 @@ For information about how to run this project check my blogpost on Hackster http
 ### Demonstration
 You can see the project in action in this video
 
-___
+
 
 **Author**: Simone Bartolini https://www.linkedin.com/in/simone-bartolini-9628561a3
