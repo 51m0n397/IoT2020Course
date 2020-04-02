@@ -1,75 +1,69 @@
 <html>
-<head>
-   <meta charset="UTF-8">
-   <title>Environmental stations dashboard</title>
-   <link rel="stylesheet" type="text/css" href="style.css">
-   <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
-</head>
-<body>
-  <div class="topbar">
-  <div class="header">
-      <h1>Environmental stations dashboard</h1>
+  <head>
+    <meta charset="UTF-8">
+    <title>Environmental stations dashboard</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="header">
+        <h1>Environmental stations dashboard</h1>
+      </div>
+      <div class="topnav">
+        <a class="active" id="current-values-link" onClick="switchView('current-values-link')">Current values</a>
+        <a class="inactive" id="past-values-link" onClick="switchView('past-values-link')">Past values</a>
+      </div>
     </div>
-
-  <div class="topnav">
-    <a class="active" id="current-values-link" onClick="switchView('current-values-link')">Current values</a>
-    <a class="inactive" id="past-values-link" onClick="switchView('past-values-link')">Past values</a>
-  </div>
-</div>
-
-   <div id="current-values-div">
-     <div align="center" style="padding:15px;">
-       <select id="station-select" onChange="changeStation()">
-         <option disabled selected value> -- select an option -- </option>
-       </select>
-     </div>
-     <table id="station-info">
-       <tr>
-         <th>Temperature</th>
-         <td></td>
-       </tr>
-       <tr>
-         <th>Humidity</th>
-         <td></td>
-       </tr>
-       <tr>
-         <th>Wind Direction</th>
-         <td></td>
-       </tr>
-       <tr>
-         <th>Wind Intensity</th>
-         <td></td>
-       </tr>
-       <tr>
-         <th>Rain Height</th>
-         <td></td>
-       </tr>
-     </table>
-   </div>
-
-   <div id="past-values-div" style="display:none;">
-     <div align="center" style="padding:15px;">
-       <select id="sensor-select" onChange="refreshSensorChart()">
-         <option disabled selected value> -- select an option -- </option>
-         <option value="temperature">Temperature</option>
-         <option value="humidity">Humidity</option>
-         <option value="windDirection">Wind Direction</option>
-         <option value="windIntensity">Wind Intensity</option>
-         <option value="rainHeight">Rain Height</option>
-       </select>
-       <button type="button" onClick="refreshSensorChart()">Refresh</button>
-     </div>
-     <br>
-     <div id="chart-div" class="chart">
-     </div>
-     <br>
-   </div>
-
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js" integrity="sha256-4iQZ6BVL4qNKlQ27TExEhBN1HFPvAvAMbFavKKosSWQ=" crossorigin="anonymous"></script>
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js" integrity="sha256-R4pqcOYV8lt7snxMQO/HSbVCFRPMdrhAFMH+vr9giYI=" crossorigin="anonymous"></script>
-   <script src="aws-iot-sdk-browser-bundle.js"></script>
-   <script src="bundle.js"></script>
-
-
-</body>
+    <div id="current-values-div">
+      <div align="center" style="padding:15px;">
+        <select id="station-select" onChange="changeStation()">
+          <option disabled selected value> -- select an option -- </option>
+        </select>
+      </div>
+      <table id="station-info">
+        <tr>
+          <th>Temperature</th>
+          <td></td>
+        </tr>
+        <tr>
+          <th>Humidity</th>
+          <td></td>
+        </tr>
+        <tr>
+          <th>Wind Direction</th>
+          <td></td>
+        </tr>
+        <tr>
+          <th>Wind Intensity</th>
+          <td></td>
+        </tr>
+        <tr>
+          <th>Rain Height</th>
+          <td></td>
+        </tr>
+      </table>
+    </div>
+    <div id="past-values-div" style="display:none;">
+      <div align="center" style="padding:15px;">
+        <select id="sensor-select" onChange="refreshSensorChart()">
+          <option disabled selected value> -- select an option -- </option>
+          <option value="temperature">Temperature</option>
+          <option value="humidity">Humidity</option>
+          <option value="windDirection">Wind Direction</option>
+          <option value="windIntensity">Wind Intensity</option>
+          <option value="rainHeight">Rain Height</option>
+        </select>
+        <button type="button" onClick="refreshSensorChart()">Refresh</button>
+      </div>
+      <br>
+      <div id="chart-div" class="chart">
+      </div>
+      <br>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js" integrity="sha256-4iQZ6BVL4qNKlQ27TExEhBN1HFPvAvAMbFavKKosSWQ=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js" integrity="sha256-R4pqcOYV8lt7snxMQO/HSbVCFRPMdrhAFMH+vr9giYI=" crossorigin="anonymous"></script>
+    <script src="aws-iot-sdk-browser-bundle.js"></script>
+    <script src="bundle.js"></script>
+  </body>
 </html>
