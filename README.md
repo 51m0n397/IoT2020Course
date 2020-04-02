@@ -16,10 +16,10 @@ In this first part the environmental station is simulated using a python script.
 - A web-based dashboard developed in javascript displays the current state of the sensors and the values received during the last hour. The code for this is in the folder **web_client**.
 
 ### How to run
-For information about how to run this project check my blogpost on Hackster https://www.hackster.io/simone-bartolini/iot-environmental-station-using-aws-part-1-c01649
+For information about how to run this part of the project check my blogpost on Hackster https://www.hackster.io/simone-bartolini/iot-environmental-station-using-aws-part-1-c01649
 
 ### Demonstration
-You can see the project in action in this video https://www.youtube.com/watch?v=9jjE9SlO0yw
+You can see this part of the project in action in this video https://www.youtube.com/watch?v=9jjE9SlO0yw
 
 
 
@@ -38,10 +38,10 @@ In this second part the python script is replaced by a program for RiotOS, an op
 - The same web dashboard as before is used to display the data.
 
 ### How to run
-For information about how to run this project check my blogpost on Hackster https://www.hackster.io/simone-bartolini/iot-environmental-station-using-aws-part-2-real-hardware-1da6cc
+For information about how to run this part of the project check my blogpost on Hackster https://www.hackster.io/simone-bartolini/iot-environmental-station-using-aws-part-2-real-hardware-1da6cc
 
 ### Demonstration
-You can see the project in action in this video
+You can see this part of the project in action in this video
 
 
 
