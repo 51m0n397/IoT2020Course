@@ -43,7 +43,7 @@ In this second part the python script is replaced by a program for RiotOS, an op
 For information about how to run this part of the project check my blogpost on Hackster https://www.hackster.io/simone-bartolini/iot-environmental-station-using-aws-part-2-1da6cc
 
 ### Demonstration
-You can see this part of the project in action in this video
+You can see this part of the project in action in this video https://youtu.be/aDZ3S6hlsIA
 
 
 
