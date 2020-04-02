@@ -23,7 +23,7 @@ You can see this part of the project in action in this video https://www.youtube
 
 
 
-## Part 2: RiotOS environmental
+## Part 2: RiotOS environmental station
 In this second part the python script is replaced by a program for RiotOS, an operating system for embedded devices, running on the emulated "native" board.
 
 ### Architecture
