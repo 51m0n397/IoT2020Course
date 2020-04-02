@@ -9,7 +9,8 @@ It has been developed as part of the IoT course during my Engineering in Compute
 In this first part the environmental station is simulated using a python script.
 
 ### Architecture
-- The virtual environmental station publishes on an MQTT channel the data from the sensors. The python script is in the folder **environmental_station**;
+![](/images/architecture1.png)
+- The virtual environmental stations publish on an MQTT channel the data from the sensors. The code for this is in the folder **environmental_station**;
 
 - AWS is used to manage the MQTT broker. The messages received are also saved in a DynamoDB database;
 
@@ -27,6 +28,7 @@ You can see this part of the project in action in this video https://www.youtube
 In this second part the python script is replaced by a program for RiotOS, an operating system for embedded devices, running on the emulated "native" board.
 
 ### Architecture
+![](/images/architecture2.png)
 - The IoT devices publish the sensor data on a topic using MQTT-SN. The code for this in in the folder **riot_environmental_station**;
 
 - Eclipse mosquito RSMB is used as a MQTT-SN broker. The code for this in in the folder **MQTTSN-broker**;
@@ -38,7 +40,7 @@ In this second part the python script is replaced by a program for RiotOS, an op
 - The same web dashboard as before is used to display the data.
 
 ### How to run
-For information about how to run this part of the project check my blogpost on Hackster https://www.hackster.io/simone-bartolini/iot-environmental-station-using-aws-part-2-real-hardware-1da6cc
+For information about how to run this part of the project check my blogpost on Hackster https://www.hackster.io/simone-bartolini/iot-environmental-station-using-aws-part-2-1da6cc
 
 ### Demonstration
 You can see this part of the project in action in this video
