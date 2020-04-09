@@ -93,7 +93,11 @@ static int cmd_env_station(int argc, char **argv) {
     puts("Starting join procedure");
     while (semtech_loramac_join(&loramac, LORAMAC_JOIN_OTAA) != SEMTECH_LORAMAC_JOIN_SUCCEEDED) {
         puts("Join procedure failed");
+<<<<<<< HEAD
         xtimer_sleep(10);
+=======
+        xtimer_sleep(atoi(10));
+>>>>>>> b3715951918cc371f12a44e6c00f3381021fa80f
         continue;
     }
 
@@ -114,7 +118,11 @@ static int cmd_env_station(int argc, char **argv) {
                                            strlen(data));
         if (ret != SEMTECH_LORAMAC_TX_DONE && ret != SEMTECH_LORAMAC_TX_OK) {
             printf("Cannot send message '%s', ret code: %d\n", data, ret);
+<<<<<<< HEAD
             xtimer_sleep(10);
+=======
+            xtimer_sleep(atoi(10));
+>>>>>>> b3715951918cc371f12a44e6c00f3381021fa80f
             continue;
         }
 
