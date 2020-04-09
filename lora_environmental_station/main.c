@@ -112,7 +112,9 @@ static int cmd_env_station(int argc, char **argv) {
 
         uint8_t ret = semtech_loramac_send(&loramac, (uint8_t *)data,
                                            strlen(data));
-        if (ret != SEMTECH_LORAMAC_TX_DONE && ret != SEMTECH_LORAMAC_TX_OK) {
+        if (ret == SEMTECH_LORAMAC_TX_DONE || ret == SEMTECH_LORAMAC_TX_OK) {
+            printf("Successfully sent message '%s'\n", data);
+        } else {
             printf("Cannot send message '%s', ret code: %d\n", data, ret);
             xtimer_sleep(10);
             continue;
