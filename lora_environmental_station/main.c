@@ -28,7 +28,7 @@ semtech_loramac_t loramac;
 
 
 static void string_to_hex_array(char *string, uint8_t *hex) {
-    for (int i=0; i<strlen(string); i+=2){
+    for (uint8_t i=0; i<strlen(string); i+=2){
         char temp[2];
         temp[0]=string[i];
         temp[1]=string[i+1];
@@ -102,9 +102,9 @@ static int cmd_env_station(int argc, char **argv) {
     semtech_loramac_set_appkey(&loramac, appkey);
 
     /* start the OTAA join procedure */
-    puts("Starting join procedure");
+    printf("Starting join procedure");
     while (semtech_loramac_join(&loramac, LORAMAC_JOIN_OTAA) != SEMTECH_LORAMAC_JOIN_SUCCEEDED) {
-        puts("Join procedure failed");
+        printf("Join procedure failed");
         xtimer_sleep(10);
         continue;
     }
