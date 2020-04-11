@@ -26,11 +26,15 @@ typedef struct sensors {
 /* Declare globally the loramac descriptor */
 semtech_loramac_t loramac;
 
-/* Device and application informations required for OTAA activation */
-static const uint8_t deveui[LORAMAC_DEVEUI_LEN] = { 0x00, 0x46, 0x06, 0x4E, 0x63, 0xA0, 0x16, 0x18 };
-static const uint8_t appeui[LORAMAC_APPEUI_LEN] = { 0x70, 0xB3, 0xD5, 0x7E, 0xD0, 0x02, 0xD7, 0x98 };
-static const uint8_t appkey[LORAMAC_APPKEY_LEN] = { 0xBB, 0x1D, 0x06, 0x97, 0xD6, 0x17, 0xBA, 0xAD, 0x57, 0xBD, 0x9D, 0xF4, 0xF5, 0xB9, 0x80, 0xC7 };
 
+static void string_to_hex_array(char *string, uint8_t *hex) {
+    for (int i=0; i<strlen(string); i+=2){
+        char temp[2];
+        temp[0]=string[i];
+        temp[1]=string[i+1];
+        hex[i/2]=(int)strtol(temp, NULL, 16);
+    }
+}
 
 /* Function for generating random integer in [lower, upper]. */
 static int rand_int(int lower, int upper) {
@@ -73,8 +77,8 @@ static void update_sensors(sensors_t *sensors) {
  * stations/RiotOSEnvironmentalStation + the id of the station.
  */
 static int cmd_env_station(int argc, char **argv) {
-    if (argc < 2) {
-        printf("usage: %s <seconds>\n", argv[0]);
+    if (argc < 5) {
+        printf("usage: %s <deveui> <appeui> <appkey> <seconds>\n", argv[0]);
         return 1;
     }
 
@@ -85,6 +89,14 @@ static int cmd_env_station(int argc, char **argv) {
     semtech_loramac_set_dr(&loramac, 5);
 
     /* set the LoRaWAN keys */
+    uint8_t deveui[LORAMAC_DEVEUI_LEN];
+    uint8_t appeui[LORAMAC_APPEUI_LEN];
+    uint8_t appkey[LORAMAC_APPKEY_LEN];
+
+    string_to_hex_array(argv[1], deveui);
+    string_to_hex_array(argv[2], appeui);
+    string_to_hex_array(argv[3], appkey);
+
     semtech_loramac_set_deveui(&loramac, deveui);
     semtech_loramac_set_appeui(&loramac, appeui);
     semtech_loramac_set_appkey(&loramac, appkey);
@@ -124,7 +136,7 @@ static int cmd_env_station(int argc, char **argv) {
         semtech_loramac_recv(&loramac);
 
 
-        xtimer_sleep(atoi(argv[1]));
+        xtimer_sleep(atoi(argv[4]));
     }
 
     return 0;
