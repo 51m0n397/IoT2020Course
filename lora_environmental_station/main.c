@@ -104,10 +104,11 @@ static int cmd_env_station(int argc, char **argv) {
     printf("Starting join procedure\n");
     while (semtech_loramac_join(&loramac, LORAMAC_JOIN_OTAA) !=
            SEMTECH_LORAMAC_JOIN_SUCCEEDED) {
-        printf("Join procedure failed\n");
+        printf("Join procedure failed, retrying...\n");
         xtimer_sleep(10);
         continue;
     }
+    printf("Join procedure succeded\n");
 
     sensors_t sensors;
     char data[128];
