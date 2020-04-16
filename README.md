@@ -47,4 +47,26 @@ You can see this part of the project in action in this video https://youtu.be/aD
 
 
 
+## Part 3: LoRaWAN environmental station
+In this third part the environmental station is still a program for RiotOS, but it is designed to run on ST B-L072Z-LRWAN1 boards in order to use LoRaWAN for the communication.
+
+### Architecture
+![](/images/architecture3.png)
+
+- The IoT devices send the sensors data to the TTN backend using LoRaWAN. The code for this in in the folder **lora_environmental_station**;
+
+- A python script acts as a bridge between TTN and AWS subscribing to the topics on TTN MQTT broker and republishing the messages over AWS IoT MQTT broker. The code for this in in the folder **lora-MQTT-bridge**;
+
+- As in the first part of the project AWS saves the messages received into a DynamoDB table;
+
+- The same web dashboard as before is used to display the data.
+
+
+### How to run
+For information about how to run this part of the project check my blogpost on Hackster https://www.hackster.io/simone-bartolini/iot-environmental-station-using-aws-part-3-d928e6
+
+### Demonstration
+You can see this part of the project in action in this video 
+
+
 **Author**: Simone Bartolini https://www.linkedin.com/in/simone-bartolini-9628561a3
