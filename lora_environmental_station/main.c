@@ -101,10 +101,10 @@ static int cmd_env_station(int argc, char **argv) {
     semtech_loramac_set_appkey(&loramac, appkey);
 
     /* start the OTAA join procedure */
-    printf("Starting join procedure");
+    printf("Starting join procedure\n");
     while (semtech_loramac_join(&loramac, LORAMAC_JOIN_OTAA) !=
            SEMTECH_LORAMAC_JOIN_SUCCEEDED) {
-        printf("Join procedure failed");
+        printf("Join procedure failed\n");
         xtimer_sleep(10);
         continue;
     }
