@@ -48,6 +48,10 @@ awsClient.configureMQTTOperationTimeout(5)  # 5 sec
 
 
 # TTN client configuration.
+# MAKE SHURE that in the same folder as this scipt there is the certificate
+# of the TTN CA "mqtt-ca.pem.crt" and a file "key.txt" containing on the first
+# line the name of your TTN application and on the second line the relative
+# access key.
 ttnClient.on_connect = on_connect
 ttnClient.on_message = on_message
 with open("key.txt", "r") as key:
