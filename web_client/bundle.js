@@ -143,7 +143,8 @@
             "#id": "id"
           },
           KeyConditionExpression: "#id = :station",
-          TableName: 'EnvironmentalStations'
+          TableName: 'EnvironmentalStations',
+          "ScanIndexForward": false
         };
 
         //Queries the data from the selected station.
