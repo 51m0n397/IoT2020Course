@@ -11,8 +11,6 @@
 #include "net/loramac.h"
 #include "semtech_loramac.h"
 
-#include "board.h"
-
 /* Struct containing the sensors data. */
 typedef struct sensors {
     int temperature;
@@ -26,13 +24,14 @@ typedef struct sensors {
 /* Declare globally the loramac descriptor */
 semtech_loramac_t loramac;
 
-
-static void string_to_hex_array(char *string, uint8_t *hex) {
+/* Function for converting a string containing an hexadecimal number
+ * to an array of bytes */
+static void hex_string_to_byte_array(char *string, uint8_t *array) {
     for (uint8_t i=0; i<strlen(string); i+=2){
         char temp[2];
         temp[0]=string[i];
         temp[1]=string[i+1];
-        hex[i/2]=(int)strtol(temp, NULL, 16);
+        array[i/2]=(uint8_t)strtol(temp, NULL, 16);
     }
 }
 
@@ -71,10 +70,10 @@ static void update_sensors(sensors_t *sensors) {
 }
 
 /* Enviromental station shell command.
- * It takes in input the address and the port of the gateway,
- * the id of the station and the seconds to pass between each publish.
- * It regularly updates the sensor data and publishes it to the topic
- * stations/RiotOSEnvironmentalStation + the id of the station.
+ * It takes in input the Device EUI, the Application EUI, the App key
+ * and the seconds to pass between each message.
+ * It regularly updates the sensor data and sends it to the TTN backend
+ * using LoRaWAN.
  */
 static int cmd_env_station(int argc, char **argv) {
     if (argc < 5) {
@@ -93,9 +92,9 @@ static int cmd_env_station(int argc, char **argv) {
     uint8_t appeui[LORAMAC_APPEUI_LEN];
     uint8_t appkey[LORAMAC_APPKEY_LEN];
 
-    string_to_hex_array(argv[1], deveui);
-    string_to_hex_array(argv[2], appeui);
-    string_to_hex_array(argv[3], appkey);
+    hex_string_to_byte_array(argv[1], deveui);
+    hex_string_to_byte_array(argv[2], appeui);
+    hex_string_to_byte_array(argv[3], appkey);
 
     semtech_loramac_set_deveui(&loramac, deveui);
     semtech_loramac_set_appeui(&loramac, appeui);
@@ -103,7 +102,8 @@ static int cmd_env_station(int argc, char **argv) {
 
     /* start the OTAA join procedure */
     printf("Starting join procedure");
-    while (semtech_loramac_join(&loramac, LORAMAC_JOIN_OTAA) != SEMTECH_LORAMAC_JOIN_SUCCEEDED) {
+    while (semtech_loramac_join(&loramac, LORAMAC_JOIN_OTAA) !=
+           SEMTECH_LORAMAC_JOIN_SUCCEEDED) {
         printf("Join procedure failed");
         xtimer_sleep(10);
         continue;
@@ -113,6 +113,7 @@ static int cmd_env_station(int argc, char **argv) {
     char data[128];
 
     while (1) {
+        /* update the sensor data */
         update_sensors(&sensors);
 
         sprintf(data, "{\"temperature\": \"%d\", \"humidity\": \"%d\", "
@@ -122,6 +123,7 @@ static int cmd_env_station(int argc, char **argv) {
                       sensors.windDirection, sensors.windIntensity,
                       sensors.rainHeight);
 
+        /* send the message */
         uint8_t ret = semtech_loramac_send(&loramac, (uint8_t *)data,
                                            strlen(data));
         if (ret == SEMTECH_LORAMAC_TX_DONE || ret == SEMTECH_LORAMAC_TX_OK) {
@@ -135,10 +137,10 @@ static int cmd_env_station(int argc, char **argv) {
         /* wait for any potentially received data */
         semtech_loramac_recv(&loramac);
 
-
         xtimer_sleep(atoi(argv[4]));
     }
 
+    /* Should be never reached */
     return 0;
 }
 
