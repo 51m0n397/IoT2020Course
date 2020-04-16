@@ -66,7 +66,7 @@ In this third part the environmental station is still a program for RiotOS, but 
 For information about how to run this part of the project check my blogpost on Hackster https://www.hackster.io/simone-bartolini/iot-environmental-station-using-aws-part-3-d928e6
 
 ### Demonstration
-You can see this part of the project in action in this video
+You can see this part of the project in action in this video https://youtu.be/epP26noZgYs
 
 
 **Author**: Simone Bartolini https://www.linkedin.com/in/simone-bartolini-9628561a3
