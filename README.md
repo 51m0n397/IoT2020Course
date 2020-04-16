@@ -24,7 +24,7 @@ You can see this part of the project in action in this video https://www.youtube
 
 
 
-## Part 2: RiotOS environmental station
+## Part 2: RiotOS MQTT-SN environmental station
 In this second part the python script is replaced by a program for RiotOS, an operating system for embedded devices, running on the emulated "native" board.
 
 ### Architecture
@@ -66,7 +66,7 @@ In this third part the environmental station is still a program for RiotOS, but 
 For information about how to run this part of the project check my blogpost on Hackster https://www.hackster.io/simone-bartolini/iot-environmental-station-using-aws-part-3-d928e6
 
 ### Demonstration
-You can see this part of the project in action in this video 
+You can see this part of the project in action in this video
 
 
 **Author**: Simone Bartolini https://www.linkedin.com/in/simone-bartolini-9628561a3
