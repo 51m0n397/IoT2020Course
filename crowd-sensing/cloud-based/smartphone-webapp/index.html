@@ -8,33 +8,54 @@
 </head>
 <body>
   <h1>Accelerometer raw data</h1>
+  <button type="button" id="permission" style="display:none">Allow</button>
   <div id="status">No data</div>
 
   <script>
     window.onload = function () {
-      // Check if is IOS 13 when page loads.
-      if ( window.DeviceMotionEvent && typeof window.DeviceMotionEvent.requestPermission === 'function' ){
-        // Everything here is just a lazy banner. You can do the banner your way.
-        const banner = document.createElement('div')
-        banner.innerHTML = `<div style="z-index: 1; position: absolute; width: 100%; background-color:#000; color: #fff"><p style="padding: 10px">Click here to enable DeviceMotion</p></div>`
-        banner.onclick = ClickRequestDeviceMotionEvent // You NEED to bind the function into a onClick event. An artificial 'onClick' will NOT work.
-        document.querySelector('body').appendChild(banner)
-      }
+      let status = document.getElementById('status');
+
+      if ('Accelerometer' in window) {
+        //android
+        sensorAPIAccelerometer();
+      } else if (window.DeviceMotionEvent) {
+        //ios
+        if (typeof window.DeviceMotionEvent.requestPermission === 'function') {
+          //ios 13
+          var button = document.getElementById("permission");
+          button.onclick = ClickRequestDeviceMotionEvent;
+          button.style.display = "block";
+        } else {
+          //older version of ios, no need for permission
+          deviceMotionAccelerometer();
+        }
+      } else status.innerHTML = 'Accelerometer not supported';
     }
 
-    function ClickRequestDeviceMotionEvent () {
+    function sensorAPIAccelerometer() {
+      let sensor = new Accelerometer();
+      sensor.addEventListener('reading', function(e) {
+        status.innerHTML = 'x: ' + e.target.x + '<br> y: ' + e.target.y + '<br> z: ' + e.target.z;
+      });
+      sensor.start();
+    }
+
+    function deviceMotionAccelerometer(){
+      window.addEventListener('devicemotion', function(e) {
+        var accelerationX = e.accelerationIncludingGravity.x;
+        var accelerationY = e.accelerationIncludingGravity.y;
+        var accelerationZ = e.accelerationIncludingGravity.z;
+        status.innerHTML = 'x: ' + accelerationX + '<br> y: ' + accelerationY + '<br> z: ' + accelerationZ;
+      });
+    }
+
+    function requestDeviceMotionPermission() {
       window.DeviceMotionEvent.requestPermission()
         .then(response => {
           if (response === 'granted') {
-            window.addEventListener('devicemotion',
-              () => { console.log('DeviceMotion permissions granted.') },
-              (e) => {
-                var accelerationX = e.accelerationIncludingGravity.x;
-              	var accelerationY = e.accelerationIncludingGravity.y;
-              	var accelerationZ = e.accelerationIncludingGravity.z;
-                status.innerHTML = 'x: ' + accelerationX + '<br> y: ' + accelerationY + '<br> z: ' + accelerationZ;
-              }
-          )} else {
+            console.log('DeviceMotion permissions granted.')
+            deviceMotionAccelerometer();
+          } else {
             console.log('DeviceMotion permissions not granted.')
           }
         })
@@ -42,18 +63,7 @@
           console.error(e)
         })
     }
-
-
-    let status = document.getElementById('status');
-    if ( 'Accelerometer' in window ) {
-      let sensor = new Accelerometer();
-      sensor.addEventListener('reading', function(e) {
-        status.innerHTML = 'x: ' + e.target.x + '<br> y: ' + e.target.y + '<br> z: ' + e.target.z;
-      });
-      sensor.start();
-    }
-    else status.innerHTML = 'Accelerometer not supported';
-
+    
   </script>
 
 </body>
