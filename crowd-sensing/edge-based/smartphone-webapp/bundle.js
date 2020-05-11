@@ -76,11 +76,9 @@
 
   var ctx = document.getElementById('myChart').getContext('2d');
 
-  var data = [];
-
   var myLineChart = new Chart(ctx, {
     type: 'line',
-    data: data
+    data: []
   });
 
 
@@ -93,7 +91,7 @@
   function updateAccView() {
     let status = document.getElementById('status');
     status.innerHTML = 'raw <br> x: ' + accData.x + '<br> y: ' + accData.y + '<br> z: ' + accData.z;
-    data.push({x:Date.now(), y:accData.x});
+    myLineChart.data.push({x:Date.now(), y:accData.x});
     myLineChart.update();
   }
 
