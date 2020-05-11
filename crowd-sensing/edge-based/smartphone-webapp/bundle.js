@@ -48,7 +48,7 @@
     sessionToken: ''
   });
 
-  
+
   //The cognitoIdentity used for authentication.
   var cognitoIdentity = new AWS.CognitoIdentity();
   AWS.config.credentials.get(function(err, data) {
@@ -94,7 +94,7 @@
     let status = document.getElementById('status');
     status.innerHTML = 'x: ' + accData.x + '<br> y: ' + accData.y + '<br> z: ' + accData.z;
     data.push({x:Date.now(), y:accData.x});
-    chart.update();
+    myLineChart.update();
   }
 
   function sleep(ms) {
