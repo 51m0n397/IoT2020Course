@@ -12,26 +12,6 @@
   <div id="status">No data</div>
 
   <script>
-    window.onload = function () {
-      let status = document.getElementById('status');
-
-      if ('Accelerometer' in window) {
-        //android
-        sensorAPIAccelerometer();
-      } else if (window.DeviceMotionEvent) {
-        //ios
-        if (typeof window.DeviceMotionEvent.requestPermission === 'function') {
-          //ios 13
-          var button = document.getElementById("permission");
-          button.onclick = ClickRequestDeviceMotionEvent;
-          button.style.display = "block";
-        } else {
-          //older version of ios, no need for permission
-          deviceMotionAccelerometer();
-        }
-      } else status.innerHTML = 'Accelerometer not supported';
-    }
-
     function sensorAPIAccelerometer() {
       let sensor = new Accelerometer();
       sensor.addEventListener('reading', function(e) {
@@ -63,7 +43,27 @@
           console.error(e)
         })
     }
-    
+
+    window.onload = function () {
+      let status = document.getElementById('status');
+
+      if ('Accelerometer' in window) {
+        //android
+        sensorAPIAccelerometer();
+      } else if (window.DeviceMotionEvent) {
+        //ios
+        if (typeof window.DeviceMotionEvent.requestPermission === 'function') {
+          //ios 13
+          var button = document.getElementById("permission");
+          button.onclick = ClickRequestDeviceMotionEvent;
+          button.style.display = "block";
+        } else {
+          //older version of ios, no need for permission
+          deviceMotionAccelerometer();
+        }
+      } else status.innerHTML = 'Accelerometer not supported';
+    }
+
   </script>
 
 </body>
