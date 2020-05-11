@@ -11,15 +11,18 @@
   <div id="status">No data</div>
 
   <script>
-    /*DeviceMotionEvent.requestPermission()
+    DeviceMotionEvent.requestPermission()
     .then(response => {
       if (response == 'granted') {
-        window.addEventListener('devicemotion', (e) => {
-          // do something with e
-        })
+        window.ondevicemotion = function(event) {
+        	var accelerationX = event.accelerationIncludingGravity.x;
+        	var accelerationY = event.accelerationIncludingGravity.y;
+        	var accelerationZ = event.accelerationIncludingGravity.z;
+          status.innerHTML = 'x: ' + accelerationX + '<br> y: ' + accelerationY + '<br> z: ' + accelerationZ;
+        }
       }
     })
-    .catch(console.error)*/
+    .catch(console.error)
 
     navigator.permissions.query({ name: 'accelerometer' })
     .then(result => {
@@ -37,7 +40,7 @@
       }
       else status.innerHTML = 'Accelerometer not supported';
     });
-    
+
 
   </script>
 
