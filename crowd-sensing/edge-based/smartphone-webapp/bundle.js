@@ -92,7 +92,7 @@
 
   function updateAccView() {
     let status = document.getElementById('status');
-    status.innerHTML = 'x: ' + accData.x + '<br> y: ' + accData.y + '<br> z: ' + accData.z;
+    status.innerHTML = 'raw <br> x: ' + accData.x + '<br> y: ' + accData.y + '<br> z: ' + accData.z;
     data.push({x:Date.now(), y:accData.x});
     myLineChart.update();
   }
