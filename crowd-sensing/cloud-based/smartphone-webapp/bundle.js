@@ -84,6 +84,25 @@
     status.innerHTML = 'x: ' + accData.x + '<br> y: ' + accData.y + '<br> z: ' + accData.z;
   }
 
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function publishAccelerometerData(){
+    while(true){
+      mqttClient.publish('accelerometer/'+clientId, JSON.stringify(accData));
+      console.log("publishing " + JSON.stringify(accData));
+      await sleep(1000);
+    }
+  }
+
+  //Connect handler: once the MQTT client has successfully connected
+  //to the MQTT server it starts publishing
+  window.mqttClientConnectHandler = function() {
+    console.log('connected to MQTT server');
+    publishAccelerometerData();
+  };
+
   function sensorAPIAccelerometer() {
     let status = document.getElementById('status');
     let sensor = new Accelerometer();
@@ -94,6 +113,8 @@
       updateAccView();
     });
     sensor.start();
+
+    mqttClient.on('connect', window.mqttClientConnectHandler);
   }
 
   function deviceMotionAccelerometer() {
@@ -103,6 +124,8 @@
       accData.z = e.accelerationIncludingGravity.z;
       updateAccView();
     });
+
+    mqttClient.on('connect', window.mqttClientConnectHandler);
   }
 
   function requestDeviceMotionPermission() {
@@ -137,33 +160,5 @@
       }
     } else document.getElementById('status').innerHTML = 'Accelerometer not supported';
   }
-
-
-
-  function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  async function publishAccelerometerData(){
-    while(true){
-      mqttClient.publish('accelerometer/'+clientId, JSON.stringify(accData));
-      console.log("publishing " + JSON.stringify(accData));
-      await sleep(1000);
-    }
-  }
-
-
-  //Connect handler: once the MQTT client has successfully connected
-  //to the MQTT server it starts publishing
-  window.mqttClientConnectHandler = function() {
-    console.log('connected to MQTT server');
-    publishAccelerometerData();
-  };
-
-
-
-  //Installing the connect handler.
-  mqttClient.on('connect', window.mqttClientConnectHandler);
-
 
 },{"./aws-configuration.js":1,"aws-iot-device-sdk":"aws-iot-device-sdk","aws-sdk":"aws-sdk"}]},{},[2]);
