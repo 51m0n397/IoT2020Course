@@ -11,7 +11,7 @@
   <div id="status">No data</div>
 
   <script>
-    DeviceMotionEvent.requestPermission()
+    /*DeviceMotionEvent.requestPermission()
     .then(response => {
       if (response == 'granted') {
         window.addEventListener('devicemotion', (e) => {
@@ -19,17 +19,26 @@
         })
       }
     })
-    .catch(console.error)
+    .catch(console.error)*/
+
+    navigator.permissions.query({ name: 'accelerometer' })
+    .then(result => {
+      if (result.state === 'denied') {
+        console.log('Permission to use accelerometer sensor is denied.');
+        return;
+      }
+      let status = document.getElementById('status');
+      if ( 'Accelerometer' in window ) {
+        let sensor = new Accelerometer();
+        sensor.addEventListener('reading', function(e) {
+          status.innerHTML = 'x: ' + e.target.x + '<br> y: ' + e.target.y + '<br> z: ' + e.target.z;
+        });
+        sensor.start();
+      }
+      else status.innerHTML = 'Accelerometer not supported';
+    });
     
-    let status = document.getElementById('status');
-    if ( 'Accelerometer' in window ) {
-      let sensor = new Accelerometer();
-      sensor.addEventListener('reading', function(e) {
-        status.innerHTML = 'x: ' + e.target.x + '<br> y: ' + e.target.y + '<br> z: ' + e.target.z;
-      });
-      sensor.start();
-    }
-    else status.innerHTML = 'Accelerometer not supported';
+
   </script>
 
 </body>
