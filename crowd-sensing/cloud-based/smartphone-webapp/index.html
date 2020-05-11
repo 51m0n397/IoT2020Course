@@ -55,7 +55,7 @@
         if (typeof window.DeviceMotionEvent.requestPermission === 'function') {
           //ios 13
           var button = document.getElementById("permission");
-          button.onclick = ClickRequestDeviceMotionEvent;
+          button.onclick = requestDeviceMotionPermission;
           button.style.display = "block";
         } else {
           //older version of ios, no need for permission
