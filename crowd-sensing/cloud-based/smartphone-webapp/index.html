@@ -1,70 +1,22 @@
-<!DOCTYPE html>
 <html>
-<head>
-  <title>Accelerometer test
-  </title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta charset="UTF-8">
-</head>
-<body>
-  <h1>Accelerometer raw data</h1>
-  <button type="button" id="permission" style="display:none">Allow</button>
-  <div id="status">No data</div>
-
-  <script>
-    function sensorAPIAccelerometer() {
-      let status = document.getElementById('status');
-      let sensor = new Accelerometer();
-      sensor.addEventListener('reading', function(e) {
-        status.innerHTML = 'x: ' + e.target.x + '<br> y: ' + e.target.y + '<br> z: ' + e.target.z;
-      });
-      sensor.start();
-    }
-
-    function deviceMotionAccelerometer(){
-      window.addEventListener('devicemotion', function(e) {
-        var accelerationX = e.accelerationIncludingGravity.x;
-        var accelerationY = e.accelerationIncludingGravity.y;
-        var accelerationZ = e.accelerationIncludingGravity.z;
-        let status = document.getElementById('status');
-        status.innerHTML = 'x: ' + accelerationX + '<br> y: ' + accelerationY + '<br> z: ' + accelerationZ;
-      });
-    }
-
-    function requestDeviceMotionPermission() {
-      window.DeviceMotionEvent.requestPermission()
-        .then(response => {
-          if (response === 'granted') {
-            console.log('DeviceMotion permissions granted.')
-            deviceMotionAccelerometer();
-          } else {
-            console.log('DeviceMotion permissions not granted.')
-          }
-        })
-        .catch(e => {
-          console.error(e)
-        })
-    }
-
-    window.onload = function () {
-      if ('Accelerometer' in window) {
-        //android
-        sensorAPIAccelerometer();
-      } else if (window.DeviceMotionEvent) {
-        //ios
-        if (typeof window.DeviceMotionEvent.requestPermission === 'function') {
-          //ios 13
-          var button = document.getElementById("permission");
-          button.onclick = requestDeviceMotionPermission;
-          button.style.display = "block";
-        } else {
-          //older version of ios, no need for permission
-          deviceMotionAccelerometer();
-        }
-      } else document.getElementById('status').innerHTML = 'Accelerometer not supported';
-    }
-
-  </script>
-
-</body>
+  <head>
+    <meta charset="UTF-8">
+    <title>accelerometer</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="header">
+        <h1>Accelerometer</h1>
+      </div>
+    </div>
+    <div id="cloud-based-div">
+      <button type="button" id="permission" style="display:none">Allow</button>
+      <br>
+      <div id="status">No data</div>
+    </div>
+    <script src="aws-iot-sdk-browser-bundle.js"></script>
+    <script src="bundle.js"></script>
+  </body>
 </html>
