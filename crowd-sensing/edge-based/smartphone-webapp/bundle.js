@@ -212,9 +212,9 @@
 
         average = average/buffer.length;
 
-        console.log(average);
+        document.getElementById('average').innerHTML=average;
 
-        if (average>0.2) status = "Moving";
+        if (average>0.5) status = "Moving";
         else status = "Resting";
 
         buffer.splice(0, windowSize/2);
