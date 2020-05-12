@@ -74,26 +74,11 @@
   });
 
 
-  var ctx = document.getElementById('myChart').getContext('2d');
-
-  var myLineChart = new Chart(ctx, {
-    type: 'line',
-    data: []
-  });
 
 
   //
   // retrieving sensors data
   //
-
-  var accData = {x:0, y:0, z:0};
-
-  function updateAccView() {
-    let status = document.getElementById('status');
-    status.innerHTML = 'raw <br> x: ' + accData.x + '<br> y: ' + accData.y + '<br> z: ' + accData.z;
-    myLineChart.data.push({x:Date.now(), y:accData.x});
-    myLineChart.update();
-  }
 
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -114,24 +99,178 @@
     publishAccelerometerData();
   };
 
+  function createMedianFilter(length) {
+    var buffer   = new Float64Array(length)
+    var history  = new Int32Array(length)
+    var counter  = 0
+    var bufCount = 0
+    function insertItem(x) {
+      var nextCounter = counter++
+      var oldCounter  = nextCounter - length
+
+      //First pass:  Remove all old items
+      var ptr = 0
+      for(var i=0; i<bufCount; ++i) {
+        var c = history[i]
+        if(c <= oldCounter) {
+          continue
+        }
+        buffer[ptr] = buffer[i]
+        history[ptr] = c
+        ptr += 1
+      }
+      bufCount = ptr
+
+      //Second pass:  Insert x
+      if(!isNaN(x)) {
+        var ptr = bufCount
+        for(var j=bufCount-1; j>=0; --j) {
+          var y = buffer[j]
+          if(y < x) {
+            buffer[ptr] = x
+            history[ptr] = nextCounter
+            break
+          }
+          buffer[ptr] = y
+          history[ptr] = history[j]
+          ptr -= 1
+        }
+        if(j < 0) {
+          buffer[0]  = x
+          history[0] = nextCounter
+        }
+        bufCount += 1
+      }
+
+      //Return median
+      if(!bufCount) {
+        return NaN
+      } else if(bufCount & 1) {
+        return buffer[bufCount>>>1]
+      } else {
+        var mid = bufCount>>>1
+        return 0.5*(buffer[mid-1] + buffer[mid])
+      }
+    }
+    return insertItem
+  }
+  function createLowPassFilter(cutoff, sampleRate) {
+    var rc = 1.0 / (cutoff * 2 * Math.PI);
+    var dt = 1.0 / sampleRate;
+    var alpha = dt / (rc + dt);
+
+    var previous;
+
+    function insertItem(x){
+      if (previous==undefined){
+        previous = x;
+        return x;
+      } else {
+        var next = previous + (alpha * (x - previous));
+        previous = next;
+        return next;
+      }
+    }
+
+    return insertItem;
+  }
+  function createHighPassFilter(cutoff, sampleRate) {
+    var rc = 1.0 / (cutoff * 2 * Math.PI);
+    var dt = 1.0 / sampleRate;
+    var alpha = rc / (rc + dt);
+
+    var previousFiltered;
+    var previousSample;
+
+    function insertItem(x){
+      if (previousFiltered == undefined){
+        previousFiltered = x;
+        previousSample = x;
+        return x;
+      } else {
+        var next = alpha * (previousFiltered + x -previousSample);
+        previousFiltered = next;
+        previousSample = x;
+        return next;
+      }
+    }
+
+    return insertItem;
+  }
+  function windowAnalysis(windowSize){
+    var buffer = [];
+    var status = "Resting";
+
+    function insertItem(x){
+      buffer.push(x);
+      if(buffer.length==windowSize){
+
+        var average=0;
+        for(var i=0; i<buffer.length; i++){
+          average+=buffer[i];
+        }
+
+        average = average/buffer.length;
+
+        console.log(average);
+
+        if (average>0.2) status = "Moving";
+        else status = "Resting";
+
+        buffer.splice(0, windowSize/2);
+      }
+      return status;
+    }
+
+    return insertItem;
+  }
+
+  var medianX = createMedianFilter(120);
+  var lowPassX = createLowPassFilter(20, 60);
+  var highPassX = createHighPassFilter(0.3, 60);
+
+  var medianY = createMedianFilter(120);
+  var lowPassY = createLowPassFilter(20, 60);
+  var highPassY = createHighPassFilter(0.3, 60);
+
+  var medianZ = createMedianFilter(120);
+  var lowPassZ = createLowPassFilter(20, 60);
+  var highPassZ = createHighPassFilter(0.3, 60);
+
+  var getMovement = windowAnalysis(120);
+
+
+
+  function listener(x, y, z){
+    let status = document.getElementById('status');
+    status.innerHTML = 'x: ' + x + '<br> y: ' + y + '<br> z: ' + z;
+
+    var filteredX = medianX(lowPassX(highPassX(x)));
+    var filteredY = medianY(lowPassY(highPassY(y)));
+    var filteredZ = medianZ(lowPassZ(highPassZ(z)));
+
+    let filteredStatus = document.getElementById('filtered-status');
+    filteredStatus.innerHTML = 'x: ' + filteredX + '<br> y: ' + filteredY + '<br> z: ' + filteredZ;
+
+    document.getElementById('movement').innerHTML = getMovement(Math.abs(filteredX)+Math.abs(filteredY)+Math.abs(filteredZ));
+  }
+
+
   function sensorAPIAccelerometer() {
     let status = document.getElementById('status');
-    let sensor = new Accelerometer();
+    let sensor = new Accelerometer({frequency: 60});
+
     sensor.addEventListener('reading', function(e) {
-      accData.x = e.target.x;
-      accData.y = e.target.y;
-      accData.z = e.target.z;
-      updateAccView();
+      listener(e.target.x, e.target.y, e.target.z);
     });
     sensor.start();
   }
 
   function deviceMotionAccelerometer() {
     window.addEventListener('devicemotion', function(e) {
-      accData.x = e.accelerationIncludingGravity.x;
-      accData.y = e.accelerationIncludingGravity.y;
-      accData.z = e.accelerationIncludingGravity.z;
-      updateAccView();
+      listener(e.accelerationIncludingGravity.x,
+               e.accelerationIncludingGravity.y,
+               e.accelerationIncludingGravity.z);
     });
   }
 
