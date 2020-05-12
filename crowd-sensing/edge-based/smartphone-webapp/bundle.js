@@ -289,6 +289,10 @@
       })
   }
 
+  window.onerror = function(message, source, lineno, colno, error) {
+    alert(message);
+  }
+
   window.onload = function () {
     if ('Accelerometer' in window) {
       //android
