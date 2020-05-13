@@ -7,7 +7,7 @@
    * the correct Cognito PoolID and the correct AWS region.
    */
   var awsConfiguration = {
-    poolId: 'us-east-1:ec918f32-501c-4f71-baa6-733c8ca19abd',
+    poolId: 'us-east-1:b77e9685-4a3c-4306-a929-e440fb47df86',
     host: "a29wnmzjyb35x8-ats.iot.us-east-1.amazonaws.com",
     region: 'us-east-1'
   };
