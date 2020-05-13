@@ -90,11 +90,13 @@
       document.getElementById("past-values-link").className = "inactive";
       document.getElementById('current-values-div').style.display = 'block';
       document.getElementById('past-values-div').style.display = 'none';
+      updateInfo();
     } else {
       document.getElementById("current-values-link").className = "inactive";
       document.getElementById("past-values-link").className = "active";
       document.getElementById('current-values-div').style.display = 'none';
       document.getElementById('past-values-div').style.display = 'block';
+      refreshChart();
     }
   }
 
@@ -201,7 +203,11 @@
         '<option value="' + topic.slice(14) + '">' + topic.slice(14) + '</option>';
     }
     devicesValues[topic.slice(14)] = JSON.parse(payload.toString()).status;
-    if (currentDevice != "") updateInfo();
+    if (currentDevice != ""){
+      if(document.getElementById('current-values-div').style.display=="block")
+        updateInfo();
+      else refreshChart();
+    }
   };
 
   //Function for changing the currently displayed device.
@@ -288,7 +294,7 @@
               xAxes: [{
                 type: 'time',
                 ticks: {
-                  source: 'labels'
+                  source: 'auto'
                 }
               }],
               yAxes: [{
@@ -300,7 +306,19 @@
                   }
                 }
               }]
-            }
+            },
+            plugins: {
+    					zoom: {
+    						zoom: {
+    							enabled: true,
+    							drag: {
+              			animationDuration: 1000
+              		},
+    							mode: 'x',
+    							speed: 0.05
+    						}
+    					}
+    				}
           }
         });
       }
