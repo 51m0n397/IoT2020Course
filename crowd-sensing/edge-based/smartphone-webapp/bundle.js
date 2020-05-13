@@ -28,7 +28,12 @@
   //
 
   //The id of the MQTT client.
-  var clientId = 'accelerometer-' + (Math.floor((Math.random() * 100000) + 1));
+  var clientId = getCookie("clientId");
+  if (clientId == "") {
+    clientId = 'Smartphone-' + (Math.floor((Math.random() * 100000) + 1));
+    document.cookie = "clientId="+clientId;
+  }
+
 
   AWS.config.region = AWSConfiguration.region;
   AWS.config.credentials = new AWS.CognitoIdentityCredentials({
@@ -79,25 +84,6 @@
   //
   // retrieving sensors data
   //
-
-  function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  async function publishAccelerometerData(){
-    while(true){
-      mqttClient.publish('accelerometer/'+clientId, JSON.stringify(accData));
-      console.log("publishing " + JSON.stringify(accData));
-      await sleep(1000);
-    }
-  }
-
-  //Connect handler: once the MQTT client has successfully connected
-  //to the MQTT server it starts publishing
-  window.mqttClientConnectHandler = function() {
-    console.log('connected to MQTT server');
-    publishAccelerometerData();
-  };
 
   function createMedianFilter(length) {
     var buffer   = new Float64Array(length)
@@ -197,33 +183,6 @@
 
     return insertItem;
   }
-  function windowAnalysis(windowSize){
-    var buffer = [];
-    var status = "Resting";
-
-    function insertItem(x){
-      buffer.push(x);
-      if(buffer.length==windowSize){
-
-        var average=0;
-        for(var i=0; i<buffer.length; i++){
-          average+=buffer[i];
-        }
-
-        average = average/buffer.length;
-
-        document.getElementById('average').innerHTML=average;
-
-        if (average>0.5) status = "Moving";
-        else status = "Resting";
-
-        buffer.splice(0, windowSize/2);
-      }
-      return status;
-    }
-
-    return insertItem;
-  }
 
   var medianX = createMedianFilter(120);
   var lowPassX = createLowPassFilter(20, 60);
@@ -237,11 +196,51 @@
   var lowPassZ = createLowPassFilter(20, 60);
   var highPassZ = createHighPassFilter(0.3, 60);
 
-  var getMovement = windowAnalysis(120);
 
+  class SlidingWindowAnalizer extends events {
+    constructor(windowSize) {
+      super();
+      this.windowSize = windowSize;
+      this.window = [];
+      this.status = "Resting";
+    }
 
+    insertItem(x){
+      this.window.push(x);
+      if(this.window.length == this.windowSize){
+        var average = 0;
+        for(var i=0; i<this.window.length; i++){
+          average += this.window[i];
+        }
 
-  function listener(x, y, z){
+        average = average/this.windowSize;
+
+        if (average > 0.3 && this.status == "Resting"){
+          this.status = "Moving";
+          this.emit('statusChanged');
+        } else if (average <= 0.3 && this.status == "Moving") {
+          this.status = "Resting";
+          this.emit('statusChanged');
+        }
+
+        this.window.splice(0, this.windowSize/2);
+      }
+      return this.status;
+    }
+  }
+  var slidingWindowAnalizer = new SlidingWindowAnalizer(120);
+
+  //Connect handler: once the MQTT client has successfully connected
+  //to the MQTT server it starts publishing
+  window.mqttClientConnectHandler = function() {
+    console.log('connected to MQTT server');
+    slidingWindowAnalizer.on("statusChanged", function(){
+      mqttClient.publish('EdgeComputing/'+clientId, this.status);
+      console.log("publishing " + this.status);
+    });
+  };
+
+  function accelerometerHandler(x, y, z){
     let status = document.getElementById('status');
     status.innerHTML = 'x: ' + x + '<br> y: ' + y + '<br> z: ' + z;
 
@@ -252,7 +251,7 @@
     let filteredStatus = document.getElementById('filtered-status');
     filteredStatus.innerHTML = 'x: ' + filteredX + '<br> y: ' + filteredY + '<br> z: ' + filteredZ;
 
-    document.getElementById('movement').innerHTML = getMovement(Math.abs(filteredX)+Math.abs(filteredY)+Math.abs(filteredZ));
+    document.getElementById('movement').innerHTML = slidingWindowAnalizer.insertItem(Math.abs(filteredX)+Math.abs(filteredY)+Math.abs(filteredZ));
   }
 
 
@@ -264,6 +263,8 @@
       listener(e.target.x, e.target.y, e.target.z);
     });
     sensor.start();
+
+    mqttClient.on('connect', window.mqttClientConnectHandler);
   }
 
   function deviceMotionAccelerometer() {
@@ -272,6 +273,8 @@
                e.accelerationIncludingGravity.y,
                e.accelerationIncludingGravity.z);
     });
+
+    mqttClient.on('connect', window.mqttClientConnectHandler);
   }
 
   function requestDeviceMotionPermission() {
