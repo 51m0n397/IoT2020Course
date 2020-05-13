@@ -272,7 +272,7 @@
     let sensor = new Accelerometer({frequency: 60});
 
     sensor.addEventListener('reading', function(e) {
-      listener(e.target.x, e.target.y, e.target.z);
+      accelerometerHandler(e.target.x, e.target.y, e.target.z);
     });
     sensor.start();
 
@@ -281,9 +281,9 @@
 
   function deviceMotionAccelerometer() {
     window.addEventListener('devicemotion', function(e) {
-      listener(e.accelerationIncludingGravity.x,
-               e.accelerationIncludingGravity.y,
-               e.accelerationIncludingGravity.z);
+      accelerometerHandler(e.accelerationIncludingGravity.x,
+                           e.accelerationIncludingGravity.y,
+                           e.accelerationIncludingGravity.z);
     });
 
     mqttClient.on('connect', window.mqttClientConnectHandler);
