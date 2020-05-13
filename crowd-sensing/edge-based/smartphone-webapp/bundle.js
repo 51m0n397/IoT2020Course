@@ -247,8 +247,8 @@
   window.mqttClientConnectHandler = function() {
     console.log('connected to MQTT server');
     slidingWindowAnalizer.on("statusChanged", function(){
-      mqttClient.publish('EdgeComputing/'+clientId, this.status);
-      console.log("publishing " + this.status);
+      mqttClient.publish('EdgeComputing/'+clientId, JSON.stringify({status:this.status}));
+      console.log("publishing " + JSON.stringify({status:this.status}));
     });
   };
 
