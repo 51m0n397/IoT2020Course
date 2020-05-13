@@ -102,11 +102,66 @@
   // Building station list and initializing current values.
   //
 
-  //List of stations in the database.
+  //List of devices in the database.
   var devicesList = new Set();
 
-  //Variable storing the current values of sensors of the stations.
+  //Variable storing the current values of the devices.
   var devicesValues = {};
+
+  //Parameters for the scan of the database.
+  var scanParams = {
+    ExpressionAttributeNames: {
+      "#id": "id",
+    },
+    ProjectionExpression: '#id',
+    TableName: 'EdgeHAR'
+  };
+
+  //Scans the table EdgeHAR,
+  //adds the id of the devices in devicesList and in the select menu,
+  //add the devices latest status to devicesValues;
+  ddb.scan(scanParams, function(err, data) {
+    if (err) {
+      console.log("Error", err);
+    } else {
+      data.Items.forEach(function(element) {
+        devicesList.add(element.id.S);
+      });
+      devicesList = Array.from(devicesList);
+      devicesList.sort();
+      console.log("success", devicesList);
+
+      devicesList.forEach(function(id) {
+        //Parameters of the query.
+        var queryParams = {
+          ExpressionAttributeValues: {
+            ":deivce": {
+              S: id
+            }
+          },
+          ExpressionAttributeNames: {
+            "#id": "id"
+          },
+          KeyConditionExpression: "#id = :deivce",
+          TableName: 'EdgeHAR',
+          "ScanIndexForward": false
+        };
+
+        //Queries the data from the selected device.
+        ddb.query(queryParams, function(err, data) {
+          if (err) {
+            console.log("Error", err);
+          } else {
+            //Exploiting the fact that the data is already ordered.
+            var latest = data.Items[0];
+            devicesValues[id] = latest.payload.M.status.S;
+            document.getElementById("device-select").innerHTML +=
+              '<option value="' + id + '">' + id + '</option>';
+          }
+        });
+      });
+    }
+  });
 
 
 
@@ -125,8 +180,8 @@
   //to the MQTT server it subscribes to the stationTopic
   window.mqttClientConnectHandler = function() {
     console.log('connected to MQTT server');
-    mqttClient.subscribe(stationTopic);
-    console.log("subscribed to", stationTopic);
+    mqttClient.subscribe(deviceTopic);
+    console.log("subscribed to", deviceTopic);
   };
 
   //Function for updating the div containing the current status of the device.
@@ -140,19 +195,21 @@
   //devicesValues and finally updates the div.
   window.mqttClientMessageHandler = function(topic, payload) {
     console.log('message: ' + topic + ':' + payload.toString());
-    if (devicesValues[topic.slice(9)] == undefined) {
-      devicesList.push(topic.slice(9));
+    if (devicesValues[topic.slice(14)] == undefined) {
+      devicesList.push(topic.slice(14));
       document.getElementById("device-select").innerHTML +=
-        '<option value="' + topic.slice(9) + '">' + topic.slice(9) + '</option>';
+        '<option value="' + topic.slice(14) + '">' + topic.slice(14) + '</option>';
     }
-    devicesValues[topic.slice(9)] = JSON.parse(payload.toString()).status;
+    devicesValues[topic.slice(14)] = JSON.parse(payload.toString()).status;
     if (currentDevice != "") updateInfo();
   };
 
   //Function for changing the currently displayed device.
-  window.changeStation = function() {
+  window.changeDevice = function() {
     currentDevice = document.getElementById("device-select").value;
-    updateInfo();
+    if(document.getElementById('current-values-div').style.display=="block")
+      updateInfo();
+    else refreshChart();
   }
 
   //Installing the connect and message handlers.
@@ -164,6 +221,92 @@
   //
   // Past values.
   //
+
+  //Function that returns the timestamp of one hour ago.
+  window.lastHour = function() {
+    var d = new Date();
+    d.setHours(d.getHours() - 1);
+    return d.getTime();
+  }
+
+  //Queries the database for the sensor data and draws the charts.
+  window.refreshChart = function() {
+
+    //Parameters of the query.
+    var params = {
+      ExpressionAttributeValues: {
+        ":device": {
+          S: currentDevice
+        },
+        ":lastHour": {
+          N: lastHour().toString()
+        }
+      },
+      ExpressionAttributeNames: {
+        "#id": "id",
+        "#time": "timestamp"
+      },
+      KeyConditionExpression: "#id = :device and #time >= :lastHour",
+      TableName: 'EdgeHAR'
+    };
+
+    //Queries the data from the last hour for the selected deivce.
+    ddb.query(params, function(err, data) {
+      if (err) {
+        console.log("Error", err);
+      } else {
+        console.log("success", data);
+
+        var time = [];
+        var dataset = [];
+
+        data.Items.forEach(function(element) {
+          var d = new Date();
+          d.setTime(element.timestamp.N);
+          time.push(d);
+          if(element.payload.M.status.S=="Moving")
+            dataset.push(1);
+          else dataset.push(0);
+        });
+
+        //Draws the chart.
+        let chart = new Chart(document.getElementById('chart').getContext('2d'), {
+          type: "line",
+          data: {
+            labels: time,
+            datasets: [{
+              label: currentDevice,
+              data: dataset,
+              fill: false,
+              borderColor: "rgb(255, 0, 0)",
+              steppedLine: true
+            }]
+          },
+          "options": {
+            responsive: true,
+            scales: {
+              xAxes: [{
+                type: 'time',
+                ticks: {
+                  source: 'labels'
+                }
+              }],
+              yAxes: [{
+                ticks: {
+                	stepSize: 1,
+                  callback: function(value, index, values) {
+                  	if (value==1) return "Moving";
+                      else return "Resting";
+                  }
+                }
+              }]
+            }
+          }
+        });
+      }
+    });
+
+  }
 
 
 },{"./aws-configuration.js":1,"aws-iot-device-sdk":"aws-iot-device-sdk","aws-sdk":"aws-sdk"}]},{},[2]);

@@ -15,17 +15,21 @@
         <a class="inactive" id="past-values-link" onClick="switchView('past-values-link')">Past values</a>
       </div>
     </div>
-    <div id="current-values-div">
-      <div align="center" style="padding:15px;">
-        <select id="device-select" onChange="changeDevice()">
-          <option disabled selected value> -- select an option -- </option>
-        </select>
-      </div>
+    <div align="center" style="padding:15px;">
+      <select id="device-select" onChange="changeDevice()">
+        <option disabled selected value> -- select an option -- </option>
+      </select>
+    </div>
+    <div id="current-values-div" style="display:block;">
       <div id="device-status"></div>
     </div>
     <div id="past-values-div" style="display:none;">
-      
+      <div id="chart-div" class="chart">
+        <canvas id='chart'></canvas>
+      </div>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js" integrity="sha256-4iQZ6BVL4qNKlQ27TExEhBN1HFPvAvAMbFavKKosSWQ=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js" integrity="sha256-R4pqcOYV8lt7snxMQO/HSbVCFRPMdrhAFMH+vr9giYI=" crossorigin="anonymous"></script>
     <script src="aws-iot-sdk-browser-bundle.js"></script>
     <script src="bundle.js"></script>
   </body>
