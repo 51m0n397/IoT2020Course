@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Human Activity Recognition Dashboard</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="header">
+        <h1>Human Activity Recognition Dashboard</h1>
+      </div>
+      <div class="topnav">
+        <a class="active" id="current-values-link" onClick="switchView('current-values-link')">Current values</a>
+        <a class="inactive" id="past-values-link" onClick="switchView('past-values-link')">Past values</a>
+      </div>
+    </div>
+    <div id="current-values-div">
+      <div align="center" style="padding:15px;">
+        <select id="device-select" onChange="changeDevice()">
+          <option disabled selected value> -- select an option -- </option>
+        </select>
+      </div>
+      <div id="device-status"></div>
+    </div>
+    <div id="past-values-div" style="display:none;">
+      
+    </div>
+    <script src="aws-iot-sdk-browser-bundle.js"></script>
+    <script src="bundle.js"></script>
+  </body>
+</html>
