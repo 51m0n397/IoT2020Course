@@ -105,8 +105,8 @@
     dataEventEmitter.on("dataEvent", function(){
       mqttClient.publish('CloudComputing/'+clientId, JSON.stringify(accData));
       console.log("publishing " + accData);
+      accData = [];
     });
-    accData = [];
   };
 
   function accelerometerHandler(x, y, z){
