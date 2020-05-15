@@ -268,7 +268,6 @@
 
 
   function sensorAPIAccelerometer() {
-    let status = document.getElementById('status');
     let sensor = new Accelerometer({frequency: 60});
 
     sensor.addEventListener('reading', function(e) {
