@@ -43,10 +43,11 @@
   //The id of the MQTT client.
   var clientId = getCookie("clientId");
   if (clientId == "") {
-    clientId = 'EdgeSmartphone-' + (Math.floor((Math.random() * 100000) + 1));
+    clientId = (Math.floor((Math.random() * 100000) + 1));
     document.cookie = "clientId="+clientId;
   }
 
+  clientId = 'EdgeSmartphone-' + clientId;
 
   AWS.config.region = AWSConfiguration.region;
   AWS.config.credentials = new AWS.CognitoIdentityCredentials({
