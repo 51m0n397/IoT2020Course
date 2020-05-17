@@ -1,9 +1,10 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-  //Loading the AWS SDK and the configuration objects.
+
+  //Loading libraries
   var AWS = require('aws-sdk');
   var AWSIoTData = require('aws-iot-device-sdk');
   var EventEmitter = require('events');
-  console.log('Loaded AWS SDK');
+
 
 
 
@@ -91,11 +92,25 @@
   });
 
 
+  //Connect handler: once the MQTT client has successfully connected
+  //to the MQTT server it starts publishing
+  function mqttClientConnectHandler() {
+    console.log('connected to MQTT server');
+    slidingWindowAnalizer.on("statusChanged", function(){
+      mqttClient.publish('EdgeComputing/'+clientId, JSON.stringify({status:this.status}));
+      console.log("publishing " + JSON.stringify({status:this.status}));
+    });
+  };
+
+  mqttClient.on('connect', mqttClientConnectHandler);
 
 
   //
   // retrieving sensors data
   //
+
+  var accData = {x:0, y:0, z:0};
+  var samplingFrequency = 2;
 
   function createMedianFilter(length) {
     var buffer   = new Float64Array(length)
@@ -152,6 +167,21 @@
     }
     return insertItem
   }
+  function createCombinedMedianFilter(length){
+    var medianX = createMedianFilter(length);
+    var medianY = createMedianFilter(length);
+    var medianZ = createMedianFilter(length);
+
+    function insertData(d){
+      var x = medianX(d.x);
+      var y = medianX(d.y);
+      var z = medianX(d.z);
+
+      return {x:x, y:y, z:z};
+    }
+
+    return insertData;
+  }
   function createLowPassFilter(cutoff, sampleRate) {
     var rc = 1.0 / (cutoff * 2 * Math.PI);
     var dt = 1.0 / sampleRate;
@@ -159,18 +189,22 @@
 
     var previous;
 
-    function insertItem(x){
-      if (previous==undefined){
-        previous = x;
-        return x;
+    function filterItem(d){
+      if (previous == undefined){
+        previous = d;
+        return d;
       } else {
-        var next = previous + (alpha * (x - previous));
+        var next = {
+          x: previous.x + (alpha * (d.x - previous.x)),
+          y: previous.y + (alpha * (d.y - previous.y)),
+          z: previous.z + (alpha * (d.z - previous.z))
+        }
         previous = next;
         return next;
       }
     }
 
-    return insertItem;
+    return filterItem;
   }
   function createHighPassFilter(cutoff, sampleRate) {
     var rc = 1.0 / (cutoff * 2 * Math.PI);
@@ -180,35 +214,26 @@
     var previousFiltered;
     var previousSample;
 
-    function insertItem(x){
+    function insertItem(d){
       if (previousFiltered == undefined){
-        previousFiltered = x;
-        previousSample = x;
-        return x;
+        previousFiltered = d;
+        previousSample = d;
+        return d;
       } else {
-        var next = alpha * (previousFiltered + x -previousSample);
+        var next = {
+          x: alpha * (previousFiltered.x + d.x -previousSample.x),
+          y: alpha * (previousFiltered.y + d.y -previousSample.y),
+          z: alpha * (previousFiltered.z + d.z -previousSample.z)
+        }
+
         previousFiltered = next;
-        previousSample = x;
+        previousSample = d;
         return next;
       }
     }
 
     return insertItem;
   }
-
-  var medianX = createMedianFilter(120);
-  var lowPassX = createLowPassFilter(20, 60);
-  var highPassX = createHighPassFilter(0.3, 60);
-
-  var medianY = createMedianFilter(120);
-  var lowPassY = createLowPassFilter(20, 60);
-  var highPassY = createHighPassFilter(0.3, 60);
-
-  var medianZ = createMedianFilter(120);
-  var lowPassZ = createLowPassFilter(20, 60);
-  var highPassZ = createHighPassFilter(0.3, 60);
-
-
   class SlidingWindowAnalizer extends EventEmitter {
     constructor(windowSize) {
       super();
@@ -217,20 +242,24 @@
       this.status = "Resting";
     }
 
-    insertItem(x){
-      this.window.push(x);
+    insertItem(d){
+      this.window.push(d);
       if(this.window.length == this.windowSize){
         var average = 0;
         for(var i=0; i<this.window.length; i++){
-          average += this.window[i];
+          average += Math.abs(this.window[i].x)
+                   + Math.abs(this.window[i].y)
+                   + Math.abs(this.window[i].z);
         }
 
-        average = average/this.windowSize;
+        average = average/(this.windowSize);
 
-        if (average > 0.3 && this.status == "Resting"){
+        console.log(average);
+
+        if (average > 0.8 && this.status == "Resting"){
           this.status = "Moving";
           this.emit('statusChanged');
-        } else if (average <= 0.3 && this.status == "Moving") {
+        } else if (average <= 0.8 && this.status == "Moving") {
           this.status = "Resting";
           this.emit('statusChanged');
         }
@@ -240,90 +269,116 @@
       return this.status;
     }
   }
-  var slidingWindowAnalizer = new SlidingWindowAnalizer(120);
 
-  //Connect handler: once the MQTT client has successfully connected
-  //to the MQTT server it starts publishing
-  window.mqttClientConnectHandler = function() {
-    console.log('connected to MQTT server');
-    slidingWindowAnalizer.on("statusChanged", function(){
-      mqttClient.publish('EdgeComputing/'+clientId, JSON.stringify({status:this.status}));
-      console.log("publishing " + JSON.stringify({status:this.status}));
-    });
-  };
+  var medianFilter = createCombinedMedianFilter(samplingFrequency);
+  var lowPassFilter = createLowPassFilter(20, samplingFrequency);
+  var highPassFilter = createHighPassFilter(0.3, samplingFrequency);
 
-  function accelerometerHandler(x, y, z){
-    let status = document.getElementById('status');
-    status.innerHTML = 'x: ' + x + '<br> y: ' + y + '<br> z: ' + z;
 
-    var filteredX = medianX(lowPassX(highPassX(x)));
-    var filteredY = medianY(lowPassY(highPassY(y)));
-    var filteredZ = medianZ(lowPassZ(highPassZ(z)));
+  var slidingWindowAnalizer = new SlidingWindowAnalizer(samplingFrequency*3);
 
-    let filteredStatus = document.getElementById('filtered-status');
-    filteredStatus.innerHTML = 'x: ' + filteredX + '<br> y: ' + filteredY + '<br> z: ' + filteredZ;
 
-    document.getElementById('movement').innerHTML = slidingWindowAnalizer.insertItem(Math.abs(filteredX)+Math.abs(filteredY)+Math.abs(filteredZ));
+
+  function analizeData() {
+    var filteredData = highPassFilter(lowPassFilter(medianFilter(accData)));
+    slidingWindowAnalizer.insertItem(filteredData);
   }
 
-
-  function sensorAPIAccelerometer() {
-    let sensor = new Accelerometer({frequency: 60});
-
-    sensor.addEventListener('reading', function(e) {
-      accelerometerHandler(e.target.x, e.target.y, e.target.z);
-    });
-    sensor.start();
-
-    mqttClient.on('connect', window.mqttClientConnectHandler);
-  }
-
-  function deviceMotionAccelerometer() {
+  function startDeviceMotionAccelerometer() {
+    document.getElementById("SensorRequestBanner").style.display = "none";
     window.addEventListener('devicemotion', function(e) {
-      accelerometerHandler(e.accelerationIncludingGravity.x,
-                           e.accelerationIncludingGravity.y,
-                           e.accelerationIncludingGravity.z);
+      accData.x = e.accelerationIncludingGravity.x;
+      accData.y = e.accelerationIncludingGravity.y;
+      accData.z = e.accelerationIncludingGravity.z;
     });
 
-    mqttClient.on('connect', window.mqttClientConnectHandler);
+    setInterval(analizeData, 1000/samplingFrequency);
+    slidingWindowAnalizer.on("statusChanged", function(){
+      document.getElementById('status').innerHTML = this.status;
+    });
+  }
+
+  function startSensorAPIAccelerometer() {
+    navigator.permissions.query({ name: 'accelerometer' })
+    .then(result => {
+      if (result.state === 'denied') {
+        accelerometerNotAllowed();
+      } else {
+        document.getElementById("SensorRequestBanner").style.display = "none";
+        let sensor = new Accelerometer();
+        sensor.addEventListener('reading', function(e) {
+          accData.x = e.target.x;
+          accData.y = e.target.y;
+          accData.z = e.target.z;
+        });
+        sensor.start();
+
+        setInterval(analizeData, 1000/samplingFrequency);
+        slidingWindowAnalizer.on("statusChanged", function(){
+          document.getElementById('status').innerHTML = this.status;
+        });
+      }
+    });
   }
 
   function requestDeviceMotionPermission() {
     window.DeviceMotionEvent.requestPermission()
       .then(response => {
         if (response === 'granted') {
-          console.log('DeviceMotion permissions granted.')
-          deviceMotionAccelerometer();
+          startDeviceMotionAccelerometer();
         } else {
-          console.log('DeviceMotion permissions not granted.')
+          accelerometerNotAllowed();
         }
       })
       .catch(e => {
-        console.error(e)
+        console.error(e);
+        accelerometerNotAllowed();
       })
   }
 
-  window.onerror = function(message, source, lineno, colno, error) {
-    alert(message);
+  function accelerometerNotAllowed() {
+    var errorBanner = "<div id='ErrorBanner' class='Banner'>"
+                    + "<h3>Ops..</h3>"
+                    + "<p>The app requires access to the accelerometer to work</p>"
+                    + "<div>"
+
+    document.getElementById("content").innerHTML = errorBanner;
   }
 
-  window.onload = function () {
+  function noAccelerometer() {
+    var errorBanner = "<div id='ErrorBanner' class='Banner'>"
+                    + "<h3>Ops..</h3>"
+                    + "<p>Your device doesn't have an accelerometer</p>"
+                    + "<div>"
+
+    document.getElementById("content").innerHTML = errorBanner;
+  }
+
+  window.onload = function() {
     if ('Accelerometer' in window) {
       //android
-      sensorAPIAccelerometer();
+      document.getElementById("enableButton").onclick = startSensorAPIAccelerometer;
+      document.getElementById("cancelButton").onclick = accelerometerNotAllowed;
+      document.getElementById("SensorRequestBanner").style.display = "block";
+
     } else if (window.DeviceMotionEvent) {
       //ios
       if (typeof window.DeviceMotionEvent.requestPermission === 'function') {
         //ios 13
-        var button = document.getElementById("permission");
-        button.onclick = requestDeviceMotionPermission;
-        button.style.display = "block";
+        document.getElementById("enableButton").onclick = requestDeviceMotionPermission;
+        document.getElementById("cancelButton").onclick = accelerometerNotAllowed;
+        document.getElementById("SensorRequestBanner").style.display = "block";
       } else {
         //older version of ios, no need for permission
-        deviceMotionAccelerometer();
+        document.getElementById("enableButton").onclick = startSensorAPIAccelerometer;
+        document.getElementById("cancelButton").onclick = accelerometerNotAllowed;
+        document.getElementById("SensorRequestBanner").style.display = "block";
       }
-    } else document.getElementById('status').innerHTML = 'Accelerometer not supported';
+    } else {
+      noAccelerometer();
+    }
   }
+
 
 },{"aws-iot-device-sdk":"aws-iot-device-sdk","aws-sdk":"aws-sdk","events":2}],2:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
