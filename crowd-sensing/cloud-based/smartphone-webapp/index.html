@@ -8,14 +8,21 @@
   <body>
     <div class="topbar">
       <div class="header">
-        <h1>Accelerometer</h1>
+        <h1>Human Activity Recognition</h1>
       </div>
     </div>
-    <div id="cloud-based-div">
-      <button type="button" id="permission" style="display:none">Allow</button>
-      <br>
-      <div id="status">No data</div>
+    <div id="content">
+      <div id="SensorRequestBanner" class="Banner">
+        <h3>Enable accelerometer?</h3>
+        <p>This app requires access to the accelerometer sensor on your device</p>
+        <div class="ButtonGroup">
+          <button id="cancelButton">Cancel</button>
+          <button id="enableButton">Enable</button>
+        </div>
+      </div>
+      <div id="status"></div>
     </div>
+    <div id='log'> </div>
     <script src="aws-iot-sdk-browser-bundle.js"></script>
     <script src="bundle.js"></script>
   </body>

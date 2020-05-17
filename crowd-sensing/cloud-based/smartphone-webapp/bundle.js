@@ -1,9 +1,9 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-  //Loading the AWS SDK and the configuration objects.
+
+  //Loading libraries
   var AWS = require('aws-sdk');
   var AWSIoTData = require('aws-iot-device-sdk');
   var EventEmitter = require('events');
-  console.log('Loaded AWS SDK');
 
 
 
@@ -42,9 +42,11 @@
   //The id of the MQTT client.
   var clientId = getCookie("clientId");
   if (clientId == "") {
-    clientId = 'CloudSmartphone-' + (Math.floor((Math.random() * 100000) + 1));
+    clientId = (Math.floor((Math.random() * 100000) + 1));
     document.cookie = "clientId="+clientId;
   }
+
+  clientId = 'CloudSmartphone-' + clientId;
 
 
   AWS.config.region = AWSConfiguration.region;
@@ -94,83 +96,144 @@
   // retrieving sensors data
   //
 
-  var accData = [];
-  var dataEventEmitter = new EventEmitter.EventEmitter();
-
 
   //Connect handler: once the MQTT client has successfully connected
   //to the MQTT server it starts publishing
   window.mqttClientConnectHandler = function() {
     console.log('connected to MQTT server');
-    dataEventEmitter.on("dataEvent", function(){
-      mqttClient.publish('CloudComputing/'+clientId, JSON.stringify(accData));
-      console.log("publishing " + accData);
-      accData = [];
+    dataEventEmitter.on("dataEvent", function(buffer){
+      mqttClient.publish('CloudComputing/'+clientId, JSON.stringify(buffer));
+      console.log("publishing " + buffer);
     });
   };
 
-  function accelerometerHandler(x, y, z){
-    let status = document.getElementById('status');
-    status.innerHTML = 'x: ' + x + '<br> y: ' + y + '<br> z: ' + z;
+  mqttClient.on('connect', mqttClientConnectHandler);
 
-    var data = {x:x, y:y, z:z, timestamp: Date.now()};
-    accData.push(data);
-    if (accData.length == 60) dataEventEmitter.emit('dataEvent');
+
+
+  var accBuffer = [];
+  var lastAccData = {x:0, y:0, z:0};
+  var samplingFrequency = 2;
+  var dataEventEmitter = new EventEmitter.EventEmitter();
+
+  function bufferData() {
+    accBuffer.push(lastAccData);
+    document.getElementById("status").innerHTML = 'x: ' + lastAccData.x
+                                                + '<br> y: ' + lastAccData.y
+                                                + '<br> z: ' + lastAccData.z;
+    if (accBuffer.length == 3*samplingFrequency){
+      dataEventEmitter.emit('dataEvent', accBuffer);
+      accBuffer = [];
+    }
   }
 
 
-  function sensorAPIAccelerometer() {
-    let sensor = new Accelerometer({frequency: 60});
-
-    sensor.addEventListener('reading', function(e) {
-      accelerometerHandler(e.target.x, e.target.y, e.target.z);
-    });
-    sensor.start();
-
-    mqttClient.on('connect', window.mqttClientConnectHandler);
-  }
-
-  function deviceMotionAccelerometer() {
+  function startDeviceMotionAccelerometer() {
+    document.getElementById("SensorRequestBanner").style.display = "none";
     window.addEventListener('devicemotion', function(e) {
-      accelerometerHandler(e.accelerationIncludingGravity.x,
-                           e.accelerationIncludingGravity.y,
-                           e.accelerationIncludingGravity.z);
+      lastAccData.x = e.accelerationIncludingGravity.x;
+      lastAccData.y = e.accelerationIncludingGravity.y;
+      lastAccData.z = e.accelerationIncludingGravity.z;
     });
 
-    mqttClient.on('connect', window.mqttClientConnectHandler);
+    setInterval(bufferData, 1000/samplingFrequency);
+  }
+
+
+  function startSensorAPIAccelerometer() {
+    navigator.permissions.query({ name: 'accelerometer' })
+    .then(result => {
+      if (result.state === 'denied') {
+        accelerometerNotAllowed();
+      } else {
+        document.getElementById("SensorRequestBanner").style.display = "none";
+        let sensor = new Accelerometer();
+        sensor.addEventListener('reading', function(e) {
+          lastAccData.x = e.target.x;
+          lastAccData.y = e.target.y;
+          lastAccData.z = e.target.z;
+        });
+        sensor.start();
+
+        setInterval(bufferData, 1000/samplingFrequency);
+      }
+    });
   }
 
   function requestDeviceMotionPermission() {
     window.DeviceMotionEvent.requestPermission()
       .then(response => {
         if (response === 'granted') {
-          console.log('DeviceMotion permissions granted.')
-          deviceMotionAccelerometer();
+          startDeviceMotionAccelerometer();
         } else {
-          console.log('DeviceMotion permissions not granted.')
+          accelerometerNotAllowed();
         }
       })
       .catch(e => {
-        console.error(e)
+        console.error(e);
+        accelerometerNotAllowed();
       })
   }
 
+  function accelerometerNotAllowed() {
+    var errorBanner = "<div id='ErrorBanner' class='Banner'>"
+                    + "<h3>Ops..</h3>"
+                    + "<p>The app requires access to the accelerometer to work</p>"
+                    + "<div>"
+
+    document.getElementById("content").innerHTML = errorBanner;
+  }
+
+  function noAccelerometer() {
+    var errorBanner = "<div id='ErrorBanner' class='Banner'>"
+                    + "<h3>Ops..</h3>"
+                    + "<p>Your device doesn't have an accelerometer</p>"
+                    + "<div>"
+
+    document.getElementById("content").innerHTML = errorBanner;
+  }
+
+  window.onerror = function(message, source, lineno, colno, error) {
+    alert(message);
+  }
+
   window.onload = function () {
+    var log = document.querySelector('#log');
+    ['log','debug','info','warn','error'].forEach(function (verb) {
+        console[verb] = (function (method, verb, log) {
+            return function () {
+                method.apply(console, arguments);
+                var msg = document.createElement('div');
+                msg.classList.add(verb);
+                msg.textContent = verb + ': ' + Array.prototype.slice.call(arguments).join(' ');
+                log.appendChild(msg);
+            };
+        })(console[verb], verb, log);
+    });
+
+
     if ('Accelerometer' in window) {
       //android
-      sensorAPIAccelerometer();
+      document.getElementById("enableButton").onclick = startSensorAPIAccelerometer;
+      document.getElementById("cancelButton").onclick = accelerometerNotAllowed;
+      document.getElementById("SensorRequestBanner").style.display = "block";
+
     } else if (window.DeviceMotionEvent) {
       //ios
       if (typeof window.DeviceMotionEvent.requestPermission === 'function') {
         //ios 13
-        var button = document.getElementById("permission");
-        button.onclick = requestDeviceMotionPermission;
-        button.style.display = "block";
+        document.getElementById("enableButton").onclick = requestDeviceMotionPermission;
+        document.getElementById("cancelButton").onclick = accelerometerNotAllowed;
+        document.getElementById("SensorRequestBanner").style.display = "block";
       } else {
         //older version of ios, no need for permission
-        deviceMotionAccelerometer();
+        document.getElementById("enableButton").onclick = startSensorAPIAccelerometer;
+        document.getElementById("cancelButton").onclick = accelerometerNotAllowed;
+        document.getElementById("SensorRequestBanner").style.display = "block";
       }
-    } else document.getElementById('status').innerHTML = 'Accelerometer not supported';
+    } else {
+      noAccelerometer();
+    }
   }
 
 
