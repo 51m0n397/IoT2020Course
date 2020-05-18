@@ -23,6 +23,8 @@
     region: 'us-east-1'
   };
 
+  //The first time the website is loaded a clientId is generated and saved in
+  //the cookies. On subsequent runs the id is retrieved from the cookies
   function getCookie(cname) {
     var name = cname + "=";
     var decodedCookie = decodeURIComponent(document.cookie);
@@ -93,53 +95,81 @@
 
 
   //
-  // retrieving sensors data
+  // Retrieving and publishing the sensors data
   //
+
+  //The frequency at which the sensors data is retrieved
+  var samplingFrequency = 4;
+
+  //The sampler saples the accelerometer data every 'interval' milliseconds and
+  //buffers it in an array of size 'windowSize'. Once the array is full it
+  //emits a 'dataEvent' event and clears the buffer
+  class Sampler extends EventEmitter {
+    constructor(interval, windowSize) {
+      super();
+      this.last = 0;
+      this.interval = interval;
+      this.windowSize = windowSize;
+      this.buffer = [];
+    }
+
+    timeHasPast(){
+      var now = Date.now();
+      if (now >= this.last + this.interval){
+        this.last = now;
+        return true;
+      }
+      else return false;
+    }
+
+    add(d){
+      this.buffer.push(d);
+      if (this.buffer.length == this.windowSize) {
+        this.emit('dataEvent', this.buffer);
+        this.buffer = [];
+      }
+    }
+  }
+
+  var sampler = new Sampler(1000/samplingFrequency, samplingFrequency*3);
 
 
   //Connect handler: once the MQTT client has successfully connected
-  //to the MQTT server it starts publishing
-  window.mqttClientConnectHandler = function() {
+  //to the MQTT server it starts publishing the data every time is receives a
+  //'dataEvent' event
+  function mqttClientConnectHandler() {
     console.log('connected to MQTT server');
-    dataEventEmitter.on("dataEvent", function(buffer){
+    sampler.on("dataEvent", function(buffer){
       mqttClient.publish('CloudComputing/'+clientId, JSON.stringify(buffer));
-      console.log("publishing " + buffer);
+      console.log("publishing ");
     });
   };
 
   mqttClient.on('connect', mqttClientConnectHandler);
 
 
-
-  var accBuffer = [];
-  var lastAccData = {x:0, y:0, z:0};
-  var samplingFrequency = 2;
-  var dataEventEmitter = new EventEmitter.EventEmitter();
-
-  function bufferData() {
-    accBuffer.push(lastAccData);
-    document.getElementById("status").innerHTML = 'x: ' + lastAccData.x
-                                                + '<br> y: ' + lastAccData.y
-                                                + '<br> z: ' + lastAccData.z;
-    if (accBuffer.length == 3*samplingFrequency){
-      dataEventEmitter.emit('dataEvent', accBuffer);
-      accBuffer = [];
-    }
-  }
-
-
+  //This function retreives the accelerometer data from devices that support
+  //the DeviceMotion API
   function startDeviceMotionAccelerometer() {
     document.getElementById("SensorRequestBanner").style.display = "none";
     window.addEventListener('devicemotion', function(e) {
-      lastAccData.x = e.accelerationIncludingGravity.x;
-      lastAccData.y = e.accelerationIncludingGravity.y;
-      lastAccData.z = e.accelerationIncludingGravity.z;
+      if(sampler.timeHasPast()){
+        var d = {};
+        d.x = e.accelerationIncludingGravity.x;
+        d.y = e.accelerationIncludingGravity.y;
+        d.z = e.accelerationIncludingGravity.z;
+        d.id = clientId;
+        d.timestamp = Date.now();
+        sampler.add(d);
+        document.getElementById("status").innerHTML = 'x: ' + d.x
+                                                    + '<br> y: ' + d.y
+                                                    + '<br> z: ' + d.z;
+      }
     });
-
-    setInterval(bufferData, 1000/samplingFrequency);
   }
 
-
+  //This function retreives the accelerometer data from devices that support
+  //the Sensor API
   function startSensorAPIAccelerometer() {
     navigator.permissions.query({ name: 'accelerometer' })
     .then(result => {
@@ -149,13 +179,20 @@
         document.getElementById("SensorRequestBanner").style.display = "none";
         let sensor = new Accelerometer();
         sensor.addEventListener('reading', function(e) {
-          lastAccData.x = e.target.x;
-          lastAccData.y = e.target.y;
-          lastAccData.z = e.target.z;
+          if(sampler.timeHasPast()){
+            var d = {};
+            d.x = e.target.x;
+            d.y = e.target.y;
+            d.z = e.target.z;
+            d.id = clientId;
+            d.timestamp = Date.now();
+            sampler.add(d);
+            document.getElementById("status").innerHTML = 'x: ' + d.x
+                                                        + '<br> y: ' + d.y
+                                                        + '<br> z: ' + d.z;
+          }
         });
         sensor.start();
-
-        setInterval(bufferData, 1000/samplingFrequency);
       }
     });
   }
@@ -193,25 +230,11 @@
     document.getElementById("content").innerHTML = errorBanner;
   }
 
-  window.onerror = function(message, source, lineno, colno, error) {
-    alert(message);
-  }
 
+  //On loading the page it checks what API the device supports for accessing
+  //the acceleromiter. If it finds one it asks for permission and if the user
+  //allows the use of the sensor it starts retrieving the data
   window.onload = function () {
-    var log = document.querySelector('#log');
-    ['log','debug','info','warn','error'].forEach(function (verb) {
-        console[verb] = (function (method, verb, log) {
-            return function () {
-                method.apply(console, arguments);
-                var msg = document.createElement('div');
-                msg.classList.add(verb);
-                msg.textContent = verb + ': ' + Array.prototype.slice.call(arguments).join(' ');
-                log.appendChild(msg);
-            };
-        })(console[verb], verb, log);
-    });
-
-
     if ('Accelerometer' in window) {
       //android
       document.getElementById("enableButton").onclick = startSensorAPIAccelerometer;
