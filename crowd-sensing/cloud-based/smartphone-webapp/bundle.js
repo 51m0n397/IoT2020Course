@@ -41,7 +41,6 @@
     return "";
   }
 
-  //The id of the MQTT client.
   var clientId = getCookie("clientId");
   if (clientId == "") {
     clientId = (Math.floor((Math.random() * 100000) + 1));
