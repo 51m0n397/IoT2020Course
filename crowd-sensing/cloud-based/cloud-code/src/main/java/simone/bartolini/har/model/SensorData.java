@@ -1,7 +1,6 @@
 package simone.bartolini.har.model;
 
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * POJO object for a SensorData single value.
