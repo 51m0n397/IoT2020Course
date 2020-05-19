@@ -1,0 +1,44 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Human Activity Recognition Dashboard</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="header">
+        <h1>Human Activity Recognition Dashboard</h1>
+      </div>
+      <div class="topnav">
+        <a class="active" id="current-values-link" onClick="switchView('current-values-link')">Current values</a>
+        <a class="inactive" id="past-values-link" onClick="switchView('past-values-link')">Past values</a>
+      </div>
+    </div>
+    <div align="center" style="padding:15px;">
+      <select id="device-select" onChange="changeDevice()">
+        <option disabled selected value> -- select an option -- </option>
+      </select>
+    </div>
+    <div id="current-values-div" style="display:block;">
+      <h1 id="current-status"></h1>
+      <div id="current-raw" class="chart">
+        <canvas id='current-chart'></canvas>
+      </div>
+    </div>
+    <div align="center" id="past-values-div" style="display:none;">
+      <button id="refresh-charts" onclick="refreshCharts()" disabled>Refresh charts</button>
+      <div id="past-charts" class="chart">
+        <canvas id='status-chart'></canvas>
+        <br>
+        <canvas id='raw-chart'></canvas>
+      </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js" integrity="sha256-4iQZ6BVL4qNKlQ27TExEhBN1HFPvAvAMbFavKKosSWQ=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js" integrity="sha256-R4pqcOYV8lt7snxMQO/HSbVCFRPMdrhAFMH+vr9giYI=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js" integrity="sha256-eVNjHw5UeU0jUqPPpZHAkU1z4U+QFBBY488WvueTm88=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/0.7.7/chartjs-plugin-zoom.min.js" integrity="sha256-6S7w9Wue7EBvlJh/Li/cPecjTNN+yBm/AoCePQA9Xi8=" crossorigin="anonymous"></script>
+    <script src="../../js-libraries/aws-iot-sdk-browser-bundle.js"></script>
+    <script src="bundle.js"></script>
+  </body>
+</html>
