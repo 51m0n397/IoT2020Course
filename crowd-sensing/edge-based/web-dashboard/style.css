@@ -71,4 +71,8 @@ body {
          font-size: 4vw;
     }
 }
- 
+
+#device-status {
+  margin: 10pt;
+  text-align: center;
+}
