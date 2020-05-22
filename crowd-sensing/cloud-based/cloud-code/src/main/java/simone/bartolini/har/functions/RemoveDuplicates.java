@@ -14,26 +14,26 @@ import org.apache.flink.util.Collector;
 import simone.bartolini.har.model.ResultData;
 
 /**
- * Process function for removing ResultData elements from the stream if they 
- * have the same status as their predecessor
+ * Process function for removing ResultData elements from the stream if they
+ * have the same status as their predecessor.
  *
  * @author simbartolini@gmail.com
  */
-public class RemoveDuplicates extends KeyedProcessFunction<Tuple, ResultData, 
+public class RemoveDuplicates extends KeyedProcessFunction<Tuple, ResultData,
                                                            ResultData> {
     private transient ValueState<String> previousState;
-    
+
     @Override
     public void open(Configuration parameters) {
-        ValueStateDescriptor<String> previousStateDescriptor = 
+        ValueStateDescriptor<String> previousStateDescriptor =
                 new ValueStateDescriptor<>(
                 "previousState",
                 String.class);
-        previousState = getRuntimeContext().getState(previousStateDescriptor);        
+        previousState = getRuntimeContext().getState(previousStateDescriptor);
     }
-    
+
     @Override
-    public void processElement(ResultData in, Context ctx, 
+    public void processElement(ResultData in, Context ctx,
                                Collector<ResultData> out) throws Exception {
         String previous = previousState.value();
         if(!in.getStatus().equals(previous)){

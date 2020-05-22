@@ -21,16 +21,16 @@ import simone.bartolini.har.model.SensorData;
 /**
  * Main class of the program, it analyzes the stream of data from the devices
  * and publishes the results on an MQTT topic.
- * 
+ *
  * @author simbartolini@gmail.com
  */
 public class DataListener {
     public static void main(String[] args) throws Exception {
 
-        // Set up a simple configuration that logs on the console.
+        // Sets up a simple configuration that logs on the console.
         BasicConfigurator.configure();
 
-        // The StreamExecutionEnvironment is the context in which a program 
+        // The StreamExecutionEnvironment is the context in which a program
         // is executed.
         final StreamExecutionEnvironment env = StreamExecutionEnvironment
                 .getExecutionEnvironment();
@@ -39,62 +39,62 @@ public class DataListener {
         // The input stream from the MQTT topic.
         DataStream<byte[]> awsStream = env
                 .addSource(new AWSIoTMqttStream(AppConfiguration.brokerHost,
-                           "flink", AppConfiguration.certificateFile, 
+                           "flink", AppConfiguration.certificateFile,
                            AppConfiguration.privateKeyFile,
                            AppConfiguration.topic, AppConfiguration.qos));
-        
-        // The frequency at which the data is sampled from the sensors. This is 
-        // needed for the filtering. Make shure it is the same as in the code
-        // running on the smartphones.
-        int samplingFrequency = 4;
-        
-        // Convert the messages into SensorData.
+
+        // Converts the messages into SensorData.
         final DataStream<SensorData> dataStream = awsStream
                 .flatMap(new ParseMeasurement());
-         
-        // Apply a median filter to the data.
+
+        // The frequency at which the data is sampled from the sensors. This is
+        // needed for the filtering. Make sure it is the same as in the code
+        // running on the smartphones.
+        int samplingFrequency = 4;
+
+        // Applies a median filter to the data.
         final DataStream<SensorData> medianFilterStream = dataStream
                 .keyBy("id")
                 .countWindow(samplingFrequency, 1)
                 .apply(new MedianFilter());
-                
-        // Apply a low pass filter to the data.
+
+        // Applies a low pass filter to the data.
         final DataStream<SensorData> lowPassFilterStream = medianFilterStream
                 .keyBy("id")
                 .process(new LowPassFilter(20, samplingFrequency));
-        
-        // Apply a high pass filter to the data.
+
+        // Applies a high pass filter to the data.
         final DataStream<SensorData> highPassFilterStream = lowPassFilterStream
                 .keyBy("id")
                 .process(new HighPassFilter(0.3, samplingFrequency));
-        
-        // Define the window and apply the reduce transformation.
+
+        // Defines the window and apply the reduce transformation.
         final DataStream<SensorData> averageStream = highPassFilterStream
                 .keyBy("id")
                 .countWindow(samplingFrequency*3, samplingFrequency*3/2)
                 .reduce(new AbsAverage());
-                
+
         // Analyzes the data to recognize the activity.
         final DataStream<ResultData> resultStream = averageStream
                 .keyBy("id")
                 .map(new HarAnalizer())
                 .keyBy("id")
                 .process(new RemoveDuplicates());
-                
-        
+
+
         // Converts the result data into json.
         final DataStream<String> jsonStream = resultStream
                 .map(new ExtractJson());
-        
+
         // Publishes the data into the output topic.
         final DataStreamSink<String> finalStream = jsonStream
                 .addSink(new AWSIoTMqttSink(AppConfiguration.brokerHost,
-                         "flink", AppConfiguration.certificateFile, 
+                         "flink", AppConfiguration.certificateFile,
                          AppConfiguration.privateKeyFile,
                          AppConfiguration.outExchange, AppConfiguration.qos));
 
         jsonStream.print().setParallelism(1);
 
-        env.execute("Station Listener");
+        env.execute("Data Listener");
     }
 }

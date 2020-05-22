@@ -14,7 +14,7 @@
   /*
    * The awsConfiguration object is used to store the credentials
    * to connect to AWS service.
-   * MAKE SHURE to insert the correct name for your endpoint,
+   * MAKE SURE to insert the correct name for your endpoint,
    * the correct Cognito PoolID and the correct AWS region.
    */
   var AWSConfiguration = {
@@ -24,7 +24,7 @@
   };
 
   //The first time the website is loaded a clientId is generated and saved in
-  //the cookies. On subsequent runs the id is retrieved from the cookies
+  //the cookies. On subsequent runs the id is retrieved from the cookies.
   function getCookie(cname) {
     var name = cname + "=";
     var decodedCookie = decodeURIComponent(document.cookie);
@@ -98,16 +98,16 @@
 
 
   //
-  // retrieving sensors data
+  // Retrieving and analyzing sensor data.
   //
 
   var accData = {x:0, y:0, z:0};
 
-  //The frequency at which the sensors data is retrieved
+  //The frequency at which the sensors data is retrieved.
   var samplingFrequency = 4;
 
 
-  //This function creates a median filter with a window of size length
+  //This function creates a median filter with a window of size 'length'.
   function createCombinedMedianFilter(length){
     var medianX = createMedianFilter(length);
     var medianY = createMedianFilter(length);
@@ -125,7 +125,7 @@
   }
 
   //This function creates a low pass filter where 'cutoff' is the cutoff
-  //frequency and 'sampleRate' is the sampling rate
+  //frequency and 'sampleRate' is the sampling rate.
   function createLowPassFilter(cutoff, sampleRate) {
     var rc = 1.0 / (cutoff * 2 * Math.PI);
     var dt = 1.0 / sampleRate;
@@ -152,7 +152,7 @@
   }
 
   //This function creates a high pass filter where 'cutoff' is the cutoff
-  //frequency and 'sampleRate' is the sampling rate
+  //frequency and 'sampleRate' is the sampling rate.
   function createHighPassFilter(cutoff, sampleRate) {
     var rc = 1.0 / (cutoff * 2 * Math.PI);
     var dt = 1.0 / sampleRate;
@@ -184,7 +184,7 @@
 
   //The SlidingWindowAnalyzer analyzes the filtered data and checks if the
   //person is moving or standing still. If the status changes it fires a
-  //'statusChanged' event
+  //'statusChanged' event.
   class SlidingWindowAnalyzer extends EventEmitter {
     constructor(windowSize) {
       super();
@@ -227,15 +227,15 @@
   var slidingWindowAnalyzer = new SlidingWindowAnalyzer(samplingFrequency*3);
 
 
-  //It filters the raw acceleromiter data and pass it to the SlidingWindowAnalyzer
+  //It filters the raw accelerometer data and passes it to the SlidingWindowAnalyzer.
   function analyzeData() {
     var filteredData = highPassFilter(lowPassFilter(medianFilter(accData)));
     slidingWindowAnalyzer.insertItem(filteredData);
   }
 
   //Connect handler: once the MQTT client has successfully connected
-  //to the MQTT server it starts publishing the data every time is receives a
-  //'statusChanged' event
+  //to the MQTT broker it starts publishing the data every time it receives a
+  //'statusChanged' event.
   function mqttClientConnectHandler() {
     console.log('connected to MQTT server');
     slidingWindowAnalyzer.on("statusChanged", function(){
@@ -246,8 +246,8 @@
 
   mqttClient.on('connect', mqttClientConnectHandler);
 
-  //This function retreives the accelerometer data from devices that support
-  //the DeviceMotion API
+  //This function retrieves the accelerometer data from devices that support
+  //the DeviceMotion API.
   function startDeviceMotionAccelerometer() {
     document.getElementById("SensorRequestBanner").style.display = "none";
     window.addEventListener('devicemotion', function(e) {
@@ -262,8 +262,8 @@
     });
   }
 
-  //This function retreives the accelerometer data from devices that support
-  //the Sensor API
+  //This function retrieves the accelerometer data from devices that support
+  //the Generic Sensor API.
   function startSensorAPIAccelerometer() {
     navigator.permissions.query({ name: 'accelerometer' })
     .then(result => {
@@ -304,7 +304,7 @@
 
   function accelerometerNotAllowed() {
     var errorBanner = "<div id='ErrorBanner' class='Banner'>"
-                    + "<h3>Ops..</h3>"
+                    + "<h3>Ops...</h3>"
                     + "<p>The app requires access to the accelerometer to work</p>"
                     + "<div>"
 
@@ -313,7 +313,7 @@
 
   function noAccelerometer() {
     var errorBanner = "<div id='ErrorBanner' class='Banner'>"
-                    + "<h3>Ops..</h3>"
+                    + "<h3>Ops...</h3>"
                     + "<p>Your device doesn't have an accelerometer</p>"
                     + "<div>"
 
@@ -321,24 +321,24 @@
   }
 
   //On loading the page it checks what API the device supports for accessing
-  //the acceleromiter. If it finds one it asks for permission and if the user
-  //allows the use of the sensor it starts retrieving the data
+  //the accelerometer. If it finds one it asks for permission and if the user
+  //allows the use of the sensor it starts retrieving the data.
   window.onload = function() {
     if ('Accelerometer' in window) {
-      //android
+      //Android
       document.getElementById("enableButton").onclick = startSensorAPIAccelerometer;
       document.getElementById("cancelButton").onclick = accelerometerNotAllowed;
       document.getElementById("SensorRequestBanner").style.display = "block";
 
     } else if (window.DeviceMotionEvent) {
-      //ios
+      //iOS
       if (typeof window.DeviceMotionEvent.requestPermission === 'function') {
-        //ios 13
+        //iOS 13
         document.getElementById("enableButton").onclick = requestDeviceMotionPermission;
         document.getElementById("cancelButton").onclick = accelerometerNotAllowed;
         document.getElementById("SensorRequestBanner").style.display = "block";
       } else {
-        //older version of ios, no need for permission
+        //Oolder version of iOS, no need for permission
         document.getElementById("enableButton").onclick = startSensorAPIAccelerometer;
         document.getElementById("cancelButton").onclick = accelerometerNotAllowed;
         document.getElementById("SensorRequestBanner").style.display = "block";

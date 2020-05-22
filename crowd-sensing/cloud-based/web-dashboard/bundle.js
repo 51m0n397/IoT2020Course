@@ -11,7 +11,7 @@
   /*
    * The awsConfiguration object is used to store the credentials
    * to connect to AWS service.
-   * MAKE SHURE to insert the correct name for your endpoint,
+   * MAKE SURE to insert the correct name for your endpoint,
    * the correct Cognito PoolID and the correct AWS region.
    */
   var AWSConfiguration = {
@@ -106,7 +106,7 @@
 
 
   //
-  // Building the devices list and initializing current values.
+  // Building devices list and initializing current values.
   //
 
   //List of devices in the database.
@@ -115,7 +115,7 @@
   //Variable storing the current values of the devices.
   var devicesValues = {};
 
-  //Variable storing the name of the station we are currently displaying.
+  //Variable storing the name of the devic we are currently displaying.
   var currentDevice = "";
 
   //Parameters for the scan of the database.
@@ -128,8 +128,8 @@
   };
 
   //Scans the tables CloudStatusHAR and CloudRawHAR,
-  //adds the id of the devices in devicesList and in the select menu,
-  //add the devices latest status to devicesValues;
+  //adds the IDs of the devices in devicesList and in the select menu,
+  //adds the devices latest status to devicesValues.
   ddb.scan(scanParams, function(err, data) {
     if (err) {
       console.log("Error", err);
@@ -201,17 +201,17 @@
 
 
   //
-  // Subscibing to MQTT topic and updating current values.
+  // Subscibing to MQTT topics and updating current values.
   //
 
-  //The topic where the devices publish the raw data
+  //The topic where the devices publish the raw data.
   var rawTopic = 'CloudComputing/+';
 
-  //The topic where the cloud publishes the result of the analysis
+  //The topic where the cloud publishes the results of the analysis.
   var statusTopic = "CloudComputingResult";
 
   //Connect handler: once the MQTT client has successfully connected
-  //to the MQTT server it subscribes to the topics
+  //to the MQTT broker it subscribes to the topics.
   function mqttClientConnectHandler() {
     console.log('connected to MQTT server');
     mqttClient.subscribe(rawTopic);
@@ -287,7 +287,7 @@
   }
 
   //Message handler: upon receiving a message if it's relative to a new device
-  //it adds it to the selection menu then it saves it's values in the variable
+  //it adds it to the selection menu then it saves its values in the variable
   //devicesValues and finally updates the div.
   function mqttClientMessageHandler(topic, payload) {
     console.log('message: ' + topic + ':' + payload.toString());
@@ -338,7 +338,7 @@
     return d.getTime();
   }
 
-  //Function for updating the Charts displaying the data from the past hour
+  //Function for updating the Charts displaying the data from the past hour.
   window.refreshCharts = function() {
     //Parameters of the query.
     var params = {

@@ -13,7 +13,7 @@
   /*
    * The awsConfiguration object is used to store the credentials
    * to connect to AWS service.
-   * MAKE SHURE to insert the correct name for your endpoint,
+   * MAKE SURE to insert the correct name for your endpoint,
    * the correct Cognito PoolID and the correct AWS region.
    */
   var AWSConfiguration = {
@@ -23,7 +23,7 @@
   };
 
   //The first time the website is loaded a clientId is generated and saved in
-  //the cookies. On subsequent runs the id is retrieved from the cookies
+  //the cookies. On subsequent runs the id is retrieved from the cookies.
   function getCookie(cname) {
     var name = cname + "=";
     var decodedCookie = decodeURIComponent(document.cookie);
@@ -93,15 +93,15 @@
 
 
   //
-  // Retrieving and publishing the sensors data
+  // Retrieving and publishing the sensor data.
   //
 
-  //The frequency at which the sensors data is retrieved
+  //The frequency at which the sensors data is retrieved.
   var samplingFrequency = 4;
 
-  //The sampler saples the accelerometer data every 'interval' milliseconds and
+  //The sampler samples the accelerometer data every 'interval' milliseconds and
   //buffers it in an array of size 'windowSize'. Once the array is full it
-  //emits a 'dataEvent' event and clears the buffer
+  //emits a 'dataEvent' event and clears the buffer.
   class Sampler extends EventEmitter {
     constructor(interval, windowSize) {
       super();
@@ -133,8 +133,8 @@
 
 
   //Connect handler: once the MQTT client has successfully connected
-  //to the MQTT server it starts publishing the data every time is receives a
-  //'dataEvent' event
+  //to the MQTT broker it starts publishing the data every time it receives a
+  //'dataEvent' event.
   function mqttClientConnectHandler() {
     console.log('connected to MQTT server');
     sampler.on("dataEvent", function(buffer){
@@ -146,8 +146,8 @@
   mqttClient.on('connect', mqttClientConnectHandler);
 
 
-  //This function retreives the accelerometer data from devices that support
-  //the DeviceMotion API
+  //This function retrieves the accelerometer data from devices that support
+  //the DeviceMotion API.
   function startDeviceMotionAccelerometer() {
     document.getElementById("SensorRequestBanner").style.display = "none";
     window.addEventListener('devicemotion', function(e) {
@@ -166,8 +166,8 @@
     });
   }
 
-  //This function retreives the accelerometer data from devices that support
-  //the Sensor API
+  //This function retrieves the accelerometer data from devices that support
+  //the Generic Sensor API.
   function startSensorAPIAccelerometer() {
     navigator.permissions.query({ name: 'accelerometer' })
     .then(result => {
@@ -212,7 +212,7 @@
 
   function accelerometerNotAllowed() {
     var errorBanner = "<div id='ErrorBanner' class='Banner'>"
-                    + "<h3>Ops..</h3>"
+                    + "<h3>Ops...</h3>"
                     + "<p>The app requires access to the accelerometer to work</p>"
                     + "<div>"
 
@@ -221,7 +221,7 @@
 
   function noAccelerometer() {
     var errorBanner = "<div id='ErrorBanner' class='Banner'>"
-                    + "<h3>Ops..</h3>"
+                    + "<h3>Ops...</h3>"
                     + "<p>Your device doesn't have an accelerometer</p>"
                     + "<div>"
 
@@ -230,24 +230,24 @@
 
 
   //On loading the page it checks what API the device supports for accessing
-  //the acceleromiter. If it finds one it asks for permission and if the user
-  //allows the use of the sensor it starts retrieving the data
+  //the accelerometer. If it finds one it asks for permission and if the user
+  //allows the use of the sensor it starts retrieving the data.
   window.onload = function () {
     if ('Accelerometer' in window) {
-      //android
+      //Android
       document.getElementById("enableButton").onclick = startSensorAPIAccelerometer;
       document.getElementById("cancelButton").onclick = accelerometerNotAllowed;
       document.getElementById("SensorRequestBanner").style.display = "block";
 
     } else if (window.DeviceMotionEvent) {
-      //ios
+      //iOS
       if (typeof window.DeviceMotionEvent.requestPermission === 'function') {
-        //ios 13
+        //iOS 13
         document.getElementById("enableButton").onclick = requestDeviceMotionPermission;
         document.getElementById("cancelButton").onclick = accelerometerNotAllowed;
         document.getElementById("SensorRequestBanner").style.display = "block";
       } else {
-        //older version of ios, no need for permission
+        //Older version of iOS, no need for permission
         document.getElementById("enableButton").onclick = startSensorAPIAccelerometer;
         document.getElementById("cancelButton").onclick = accelerometerNotAllowed;
         document.getElementById("SensorRequestBanner").style.display = "block";

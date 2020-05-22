@@ -14,7 +14,7 @@
   /*
    * The awsConfiguration object is used to store the credentials
    * to connect to AWS service.
-   * MAKE SHURE to insert the correct name for your endpoint,
+   * MAKE SURE to insert the correct name for your endpoint,
    * the correct Cognito PoolID and the correct AWS region.
    */
   var AWSConfiguration = {
@@ -106,7 +106,7 @@
   }
 
   //
-  // Building station list and initializing current values.
+  // Building devices list and initializing current values.
   //
 
   //List of devices in the database.
@@ -115,7 +115,7 @@
   //Variable storing the current values of the devices.
   var devicesValues = {};
 
-  //Variable storing the name of the station we are currently displaying.
+  //Variable storing the name of the device we are currently displaying.
   var currentDevice = "";
 
   //Parameters for the scan of the database.
@@ -128,8 +128,8 @@
   };
 
   //Scans the table EdgeHAR,
-  //adds the id of the devices in devicesList and in the select menu,
-  //add the devices latest status to devicesValues;
+  //adds the IDs of the devices in devicesList and in the select menu,
+  //adds the devices latest status to devicesValues.
   ddb.scan(scanParams, function(err, data) {
     if (err) {
       console.log("Error", err);
@@ -181,13 +181,13 @@
   // Subscibing to MQTT topic and updating current values.
   //
 
-  //The topic where the environmental stations publish the sensors data.
+  //The topic where the devices publish the sensors data.
   var deviceTopic = 'EdgeComputing/+';
 
 
 
   //Connect handler: once the MQTT client has successfully connected
-  //to the MQTT server it subscribes to the deviceTopic
+  //to the MQTT broker it subscribes to the deviceTopic.
 function mqttClientConnectHandler() {
     console.log('connected to MQTT server');
     mqttClient.subscribe(deviceTopic);
@@ -201,7 +201,7 @@ function mqttClientConnectHandler() {
   }
 
   //Message handler: upon receiving a message if it's relative to a new device
-  //it adds it to the selection menu then it saves it's values in the variable
+  //it adds it to the selection menu then it saves its values in the variable
   //devicesValues and finally updates the div.
   function mqttClientMessageHandler(topic, payload) {
     console.log('message: ' + topic + ':' + payload.toString());
@@ -256,7 +256,8 @@ function mqttClientConnectHandler() {
       TableName: 'EdgeHAR'
     };
 
-    //Queries the data from the last hour for the selected deivce.
+    //Queries the table EdgeHAR retrieving data from the last hour
+    //for the selected deivce.
     ddb.query(params, function(err, data) {
       if (err) {
         console.log("Error", err);
