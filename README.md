@@ -79,13 +79,13 @@ You can see this part of the project in action in this video https://youtu.be/ep
 This is an example of how to build a crowd-sensing IoT application using the sensors inside our smartphones to do human activity recognition.
 
 
-### Part 1: Cloud based architecture
+### Part 1: Cloud-based architecture
 In this first part the raw data from the sensors is sent to the cloud where is then performed the activity recognition.
 
 #### Architecture
 ![](/images/architecture4a.png)
 
-- A javascript web-app running on the smartphones collects the accelerometer raw data and publishes it on an MQTT topic. The code for this is in the folder **crowd-sensing/cloud-based/smarthpone-webapp**;
+- A javascript web-app running on the smartphones collects the accelerometer raw data and publishes it on an MQTT topic. The code for this is in the folder **crowd-sensing/cloud-based/smartphone-webapp**;
 
 - AWS is used to manage the MQTT broker;
 
@@ -96,13 +96,13 @@ In this first part the raw data from the sensors is sent to the cloud where is t
 - A web-based dashboard developed in javascript displays the latest raw data with the resulting activity and the values received during the last hour. The code for this is in the folder **crowd-sensing/cloud-based/web-dashboard**.
 
 
-### Part 2: Edge based architecture
-In this second part the the activity recognition is done on the smartphones and only the results are sent to the cloud.
+### Part 2: Edge-based architecture
+In this second part the activity recognition is done on the smartphones and only the results are sent to the cloud.
 
 #### Architecture
 ![](/images/architecture4b.png)
 
-- A javascript web-app running on the smartphones collects the accelerometer raw data, analyzes it to recognize the activity and publishes the result on an MQTT topic. The code for this is in the folder **crowd-sensing/edge-based/smarthpone-webapp**;
+- A javascript web-app running on the smartphones collects the accelerometer raw data, analyzes it to recognize the activity and publishes the result on an MQTT topic. The code for this is in the folder **crowd-sensing/edge-based/smartphone-webapp**;
 
 - AWS is used to manage the MQTT broker;
 
@@ -116,4 +116,4 @@ In this second part the the activity recognition is done on the smartphones and 
 For information about how to run this project check my blogpost on Hackster https://www.hackster.io/simone-bartolini/iot-human-activity-recognition-using-aws-02c4fa
 
 #### Demonstration
-You can see this part of the project in action in this video
+You can see this project in action in this video
