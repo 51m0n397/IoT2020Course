@@ -116,4 +116,4 @@ In this second part the activity recognition is done on the smartphones and only
 For information about how to run this project check my blogpost on Hackster https://www.hackster.io/simone-bartolini/iot-human-activity-recognition-using-aws-02c4fa
 
 #### Demonstration
-You can see this project in action in this video
+You can see the project in action in this video https://youtu.be/L2newT4ieqA
