@@ -150,6 +150,7 @@
   //the DeviceMotion API.
   function startDeviceMotionAccelerometer() {
     document.getElementById("SensorRequestBanner").style.display = "none";
+    document.getElementById("id").innerHTML = clientId;
     window.addEventListener('devicemotion', function(e) {
       if(sampler.timeHasPast()){
         var d = {};
@@ -175,6 +176,7 @@
         accelerometerNotAllowed();
       } else {
         document.getElementById("SensorRequestBanner").style.display = "none";
+        document.getElementById("id").innerHTML = clientId;
         let sensor = new Accelerometer();
         sensor.addEventListener('reading', function(e) {
           if(sampler.timeHasPast()){

@@ -82,7 +82,7 @@ body {
   width: 100%;
 }
 
-#status {
+#status, #id {
   margin: 10pt;
   text-align: center;
 }
