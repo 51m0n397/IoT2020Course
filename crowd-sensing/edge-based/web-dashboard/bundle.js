@@ -17,10 +17,10 @@
    * MAKE SURE to insert the correct name for your endpoint,
    * the correct Cognito PoolID and the correct AWS region.
    */
-  var AWSConfiguration = {
-    poolId: 'us-east-1:1535c67e-dee5-4f0f-9bbe-06f46c1dcfbb',
-    host: "a29wnmzjyb35x8-ats.iot.us-east-1.amazonaws.com",
-    region: 'us-east-1'
+   var AWSConfiguration = {
+    poolId: '<IDENTITY_POOL_ID>',
+    host: '<ENDPOINT_ARN>',
+    region: '<AWS_REGION>'
   };
 
   //The id of the MQTT client.

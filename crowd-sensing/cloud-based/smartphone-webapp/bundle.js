@@ -17,9 +17,9 @@
    * the correct Cognito PoolID and the correct AWS region.
    */
   var AWSConfiguration = {
-    poolId: 'us-east-1:ec918f32-501c-4f71-baa6-733c8ca19abd',
-    host: "a29wnmzjyb35x8-ats.iot.us-east-1.amazonaws.com",
-    region: 'us-east-1'
+    poolId: '<IDENTITY_POOL_ID>',
+    host: '<ENDPOINT_ARN>',
+    region: '<AWS_REGION>'
   };
 
   //The first time the website is loaded a clientId is generated and saved in
